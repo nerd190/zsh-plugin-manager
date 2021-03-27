@@ -125,11 +125,11 @@ plugin_manager() {
             if [[ ! ${__ignorelevel} == 'nosource' ]]; then
                 source "$pluginfile"
             fi
-        fi
 
-        # post load hooks
-        if [[ ! -z ${__post_load_hook} ]]; then
-            eval "${__post_load_hook}"
+            # post load hooks
+            if [[ ! -z ${__post_load_hook} ]]; then
+                eval "${__post_load_hook}"
+            fi
         fi
 
         unset pluginfile
