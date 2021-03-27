@@ -1,10 +1,9 @@
-
 #
 ## PLUGIN MANAGER
 #
 
 # plugin_manager documentation:
-# arguments can be passed to plugin_manager separated by '│'.
+# arguments can be passed to plugin_manager separated by ','.
 # The second field is the name of the file to source if it is
 # named differently than the plugin. The third field may contain
 # a command that must return exit code 0 for the plugin to load.
@@ -12,100 +11,110 @@
 # not found in $PATH.
 # The fourth field contains post-install hooks.
 
-find_plugin_dir() {
 
+compile_or_recompile() {
+  local file
+  for file in "$@"; do
+    if [[ -f $file ]] && [[ ! -f ${file}.zwc ]] \
+      || [[ $file -nt ${file}.zwc ]]; then
+          zcompile "$file"
+      fi
+  done
 }
+
+local -aU files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zcompdump")
+
 
 
 plugin_manager() {
     local myarr=($@)
     set --
 
-    if [[ "${myarr[1]}" == "remove" ]]; then
-
-        myarr=(${synchronous_plugins} ${asynchronous_plugins})
-        # local filelist=($(cd ${ZDOTDIR}/plugins; find * -type d -path '*/*' -prune -print))
-        local filelist=($(cat ${ZDOTDIR}/plugins/count))
-
-        local parts
-        local dir
-        local plugindir
-        for plug in "${myarr[@]}"; do
-            parts=("${(@s[│])plug}")
-            dir="${ZDOTDIR}/plugins/${parts[1]}"
-            if [[ ! -z ${parts[3]} ]]; then
-                eval "${parts[3]}" > /dev/null 2>&1 || continue
-                if [[ ! -z "${plugindir}" ]]; then
-                    dir="${plugindir}"
-                fi
-            fi
-            filelist=(${filelist[@]//*${dir}*})
-        done
-
-        for elem in "${filelist[@]}"; do
-            sed -i -r -e "/${elem//\//\\/}/d" ${ZDOTDIR}/plugins/count
-            rm -rf "${elem}"
-            printf "Removed \x1B[31m\033[3m${elem}\033[0m …\n"
-        done
-
-        printf "Removed \x1B[31m\033[1m${#filelist}\033[0m elements\n"
-        return
-    fi
-
     # we construct an array if only 1 arg is given.
-    # to be run interactively
     if [[ ${#myarr[@]} -eq 1 ]]; then
         myarr+=($synchronous_plugins $asynchronous_plugins)
     fi
 
+    local action="${myarr[1]}"
+    if [[ ${action} != "install" ]] && [[ ${action} != "update" ]]; then
+        printf "\r\x1B[31mDid not understand action \x1B[35m\033[3m${action}\033[0m\n"
+        return 1
+    fi
+
     local plugin
     for plugin in "${myarr[@]:1}"; do
+
         # split strings by args
         parts=("${(@s[│])plugin}")
-        local __plugin="${parts[1]}" __altname="${parts[2]}" __evaluate="${parts[3]}" __ignorelevel="${parts[4]}" __postinstall_hook="${parts[5]}" __post_load_hook="${parts[6]}"
+        local __plugin="${parts[1]}"
 
-        if [[ ! -z ${__evaluate} ]]; then
-            eval "${__evaluate}" > /dev/null 2>&1 || continue
-        fi
+        for part in "${parts[@]:1}"; do
+
+            key="${part%%:*}"
+            value="${part#*:}"
+            case "${key}" in
+                (if)
+                    eval "${value}" > /dev/null 2>&1 || break 2
+                    ;;
+                (ignorelevel)
+                    local ignorelevel="${value}"
+                    ;;
+                (postinstall_hook)
+                    local postinstall_hook="${value}"
+                    ;;
+                (postload_hook)
+                    local postload_hook="${value}"
+                    ;;
+                (env)
+                    export "${value}"
+                    ;;
+                (filename)
+                    local filename="${value}"
+                    ;;
+                (*)
+                    printf "\n\x1B[31mDid not understand \033[0m\""${part}"\"\nSkipping \x1B[35m"${parts[1]}"\033[0m plugin\n"
+                    continue
+                    ;;
+            esac
+        done
+
 
         if [ -z $plugindir ]; then
             plugindir="${ZDOTDIR}/plugins/$__plugin"
         fi
 
-        case "${myarr[1]}" in
-            (update|pull)
-                printf "Updating \x1B[35m\033[3m${(r:40:: :)parts[1]} "
-                printf "\033[0m … \x1B[32m"
-                git -C ${plugindir} pull &&\
-                printf "\033[0m" ||\
-                printf "\r\x1B[31mFailed to install \x1B[35m\033[3m$__plugin\033[0m\n"
-                ;;
-            (install|load)
-                if [[ ! -d $plugindir ]]; then
-                    printf "\rInstalling \x1B[35m\033[3m${(r:39:)parts[1]}\033[0m … " &&\
-                    git clone https://github.com/$__plugin.git ${plugindir} 2> /dev/null &&\
-                    echo ${plugindir} >> ${ZDOTDIR}/plugins/count
-                    printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
-                    printf "\r\x1B[31mFailed to install \x1B[35m\033[3m$__plugin\033[0m\n"
-                    if [[ ! -z ${__postinstall_hook} ]]; then
-                        printf "\rRunning post-install hooks for \x1B[35m\033[3m${(r:19:)parts[1]##*/}\033[0m … " &&\
-                        eval "${__postinstall_hook}" &&\
-                        printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
-                        printf "\r\x1B[31mFailed to run post-install hooks for \x1B[35m\033[3m$__plugin\033[0m\n"
-                    fi
-                fi
-                ;;
-            (*)
-            printf "Did not understand command '${myarr[1]}'\n"
-            return 1
-            ;;
-        esac
+        if [[ $action == 'update' ]]; then
+            printf "Updating \x1B[35m\033[3m${(r:40:: :)parts[1]} "
+            printf "\033[0m … \x1B[32m"
+            git -C ${plugindir} pull &&\
+            printf "\033[0m" ||\
+            printf "\r\x1B[31mFailed to install \x1B[35m\033[3m$__plugin\033[0m\n"
+        elif [[ $action == 'install' ]]; then
 
-        if [[ ! ${__ignorelevel} == 'ignore' ]]; then
+            if [[ ! -d $plugindir ]]; then
+
+                printf "\rInstalling \x1B[35m\033[3m${(r:39:)parts[1]}\033[0m … " &&\
+                git clone https://github.com/$__plugin.git ${plugindir} 2> /dev/null &&\
+                echo ${plugindir} >> ${ZDOTDIR}/plugins/count
+                printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
+                printf "\r\x1B[31mFailed to install \x1B[35m\033[3m$__plugin\033[0m\n"
+
+                if [[ -n ${postinstall_hook} ]]; then
+                    printf "\rRunning post-install hooks for \x1B[35m\033[3m${(r:19:)parts[1]##*/}\033[0m … " &&\
+                    eval "${postinstall_hook}" &&\
+                    printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
+                    printf "\r\x1B[31mFailed to run post-install hooks for \x1B[35m\033[3m$__plugin\033[0m\n"
+                    unset postinstall_hook
+                fi
+            fi
+        fi
+
+
+        if [[ ! ${ignorelevel} == 'ignore' ]]; then
 
             # we determine what file to source.
-            if [[ ! -z $__altname ]]; then
-                pluginfile="${plugindir}/${__altname##*/}"
+            if [[ -n $filename ]]; then
+                pluginfile="${plugindir}/${filename##*/}"
             else
                 pluginfile="${plugindir}/${parts[1]##*/}.plugin.zsh"
                 if [[ ! -f "${pluginfile}" ]]; then
@@ -115,25 +124,31 @@ plugin_manager() {
 
             if [ ! -f "${pluginfile}" ]; then
                 printf "No file with the name \"${pluginfile##*/}\"\n"
+                printf "No file with the name \"${pluginfile}\"\n"
                 continue
             fi
 
             if [[ "${pluginfile##*.}" == "zsh" ]]; then
-                compile_or_recompile "$pluginfile"
+                files_to_compile+="${pluginfile}"
             fi
 
-            if [[ ! ${__ignorelevel} == 'nosource' ]]; then
+            if [[ ! ${ignorelevel} == 'nosource' ]]; then
                 source "$pluginfile"
+                # printf "sourced $pluginfile\n"
             fi
 
-            # post load hooks
-            if [[ ! -z ${__post_load_hook} ]]; then
-                eval "${__post_load_hook}"
-            fi
         fi
 
-        unset pluginfile
-        unset plugindir
+
+        if [[ -n "${postload_hook}" ]]; then
+            eval "${postload_hook}"
+            unset postload_hook
+        fi
+
+        unset ignorelevel postinstall_hook filename plugindir pluginfile
 
     done
+    compile_or_recompile ${files_to_compile}
+    unset files_to_compile
 }
+
