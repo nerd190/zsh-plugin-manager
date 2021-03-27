@@ -12,11 +12,9 @@
 # not found in $PATH.
 # The fourth field contains post-install hooks.
 
-
 find_plugin_dir() {
 
 }
-
 
 
 plugin_manager() {
