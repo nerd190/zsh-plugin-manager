@@ -98,6 +98,8 @@ plugin_manager() {
                 fi
                 ;;
             (*)
+            printf "Did not understand command '${myarr[1]}'\n"
+            return 1
             ;;
         esac
 
