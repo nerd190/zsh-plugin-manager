@@ -9,7 +9,72 @@
 # a command that must return exit code 0 for the plugin to load.
 # For example, you can avoid loading plugins if dependencies are
 # not found in $PATH.
-# The fourth field contains post-install hooks.
+# The fourth field contains post-init hooks.
+
+declare -aU __synchronous_plugins
+declare -aU __asynchronous_plugins
+declare -aU files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zcompdump")
+
+export PLUGROOT="${ZDOTDIR}/plugins"
+
+plug() {
+# local myarr=($@)
+# set --
+local myvar="$@"
+
+
+case "${1}" in
+
+    (init)
+        if [[ -n ${__asynchronous_plugins} ]]; then
+            plug romkatv/zsh-defer
+            __plug init ${__synchronous_plugins}
+            zsh-defer -1 __plug init ${__asynchronous_plugins}
+        elif [[ -n ${__synchronous_plugins} ]]; then
+            __plug init ${__synchronous_plugins}
+        fi
+        compile_or_recompile ${files_to_compile}
+        ;;
+    (update)
+       if [[ ${#[@]} -gt 1 ]]; then
+            shift
+            for plugin in "$@"; do
+                echo $plugin
+                echo ${__synchronous_plugins}
+                if (( ${__synchronous_plugins[(r)plugin*]} )); then
+                echo "it's in"
+            else
+                echo "it's somewhere else maybe"
+            fi
+                # __plug update ${@}
+            done
+
+       else
+            __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
+       fi
+        compile_or_recompile ${files_to_compile}
+        ;;
+    (install)
+        echo to come
+        # __plug install ${__synchronous_plugins} ${__asynchronous_plugins}
+        if [[ ${#[@]} -gt 1  ]]; then
+            printf "\r\x1B[31mCannot install plugins interactively, please load from .zshrc\033[0m\n"
+        fi
+        ;;
+    (async)
+        shift
+        __asynchronous_plugins+=${${${myvar//,[[:blank:]]/│}//,/│}:6}
+        ;;
+    (*)
+        if [[ ${myvar} != *"/"* ]]; then
+            printf "\r\x1B[3m${myvar}\033[0m does not look like a plugin and is not an action\033[0m\n"
+            return 1
+        fi
+        __synchronous_plugins+=${${myvar//,[[:blank:]]/│}//,/│}
+        ;;
+esac
+
+}
 
 
 compile_or_recompile() {
@@ -22,31 +87,16 @@ compile_or_recompile() {
   done
 }
 
-local -aU files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zcompdump")
-
-
-
-plugin_manager() {
+__plug() {
     local myarr=($@)
     set --
-
-    # we construct an array if only 1 arg is given.
-    if [[ ${#myarr[@]} -eq 1 ]]; then
-        myarr+=($synchronous_plugins $asynchronous_plugins)
-    fi
-
-    local action="${myarr[1]}"
-    if [[ ${action} != "install" ]] && [[ ${action} != "update" ]]; then
-        printf "\r\x1B[31mDid not understand action \x1B[35m\033[3m${action}\033[0m\n"
-        return 1
-    fi
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
 
         # split strings by args
         parts=("${(@s[│])plugin}")
-        local __plugin="${parts[1]}"
+        local github_name="${parts[1]}"
 
         for part in "${parts[@]:1}"; do
 
@@ -54,101 +104,125 @@ plugin_manager() {
             value="${part#*:}"
             case "${key}" in
                 (if)
-                    eval "${value}" > /dev/null 2>&1 || break 2
-                    ;;
+                eval "${value}" > /dev/null 2>&1 || break 2
+                ;;
                 (ignorelevel)
-                    local ignorelevel="${value}"
-                    ;;
+                local ignorelevel="${value}"
+                ;;
                 (postinstall_hook)
-                    local postinstall_hook="${value}"
-                    ;;
+                local postinstall_hook="${(e)value}"
+                ;;
                 (postload_hook)
-                    local postload_hook="${value}"
-                    ;;
+                local postload_hook="${value}"
+                ;;
                 (env)
-                    export "${value}"
-                    ;;
+                export "${(e)value}"
+                ;;
+                (where)
+                local where="${(e)value}"
+                ;;
                 (filename)
-                    local filename="${value}"
-                    ;;
+                local filename="${(e)value}"
+                ;;
                 (*)
-                    printf "\n\x1B[31mDid not understand \033[0m\""${part}"\"\nSkipping \x1B[35m"${parts[1]}"\033[0m plugin\n"
-                    continue
-                    ;;
+                printf "\n\x1B[31mDid not understand \033[0m\""${part}"\"\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
+                continue
+                ;;
             esac
         done
 
 
-        if [ -z $plugindir ]; then
-            plugindir="${ZDOTDIR}/plugins/$__plugin"
+        if [ -z $where ]; then
+            plugindir="${ZDOTDIR}/plugins/$github_name"
+        else
+            plugindir=${where}
+            unset where
         fi
 
+        local action="${myarr[1]}"
         if [[ $action == 'update' ]]; then
-            printf "Updating \x1B[35m\033[3m${(r:40:: :)parts[1]} "
-            printf "\033[0m … \x1B[32m"
-            git -C ${plugindir} pull &&\
-            printf "\033[0m" ||\
-            printf "\r\x1B[31mFailed to install \x1B[35m\033[3m$__plugin\033[0m\n"
-        elif [[ $action == 'install' ]]; then
-
-            if [[ ! -d $plugindir ]]; then
-
-                printf "\rInstalling \x1B[35m\033[3m${(r:39:)parts[1]}\033[0m … " &&\
-                git clone https://github.com/$__plugin.git ${plugindir} 2> /dev/null &&\
-                echo ${plugindir} >> ${ZDOTDIR}/plugins/count
-                printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
-                printf "\r\x1B[31mFailed to install \x1B[35m\033[3m$__plugin\033[0m\n"
-
-                if [[ -n ${postinstall_hook} ]]; then
-                    printf "\rRunning post-install hooks for \x1B[35m\033[3m${(r:19:)parts[1]##*/}\033[0m … " &&\
-                    eval "${postinstall_hook}" &&\
-                    printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
-                    printf "\r\x1B[31mFailed to run post-install hooks for \x1B[35m\033[3m$__plugin\033[0m\n"
-                    unset postinstall_hook
-                fi
-            fi
+            updater "${github_name}" "${plugindir}" || continue
+        elif [[ $action == 'init' ]]; then
+            installer "${plugindir}" "${github_name}" "${postinstall_hook}" || continue
         fi
 
-
-        if [[ ! ${ignorelevel} == 'ignore' ]]; then
-
-            # we determine what file to source.
-            if [[ -n $filename ]]; then
-                pluginfile="${plugindir}/${filename##*/}"
-            else
-                pluginfile="${plugindir}/${parts[1]##*/}.plugin.zsh"
-                if [[ ! -f "${pluginfile}" ]]; then
-                    pluginfile="${plugindir}/${${parts[1]##*/}//.zsh/}.zsh"
-                fi
-            fi
-
-            if [ ! -f "${pluginfile}" ]; then
-                printf "No file with the name \"${pluginfile##*/}\"\n"
-                printf "No file with the name \"${pluginfile}\"\n"
-                continue
-            fi
-
-            if [[ "${pluginfile##*.}" == "zsh" ]]; then
-                files_to_compile+="${pluginfile}"
-            fi
-
-            if [[ ! ${ignorelevel} == 'nosource' ]]; then
-                source "$pluginfile"
-                # printf "sourced $pluginfile\n"
-            fi
-
-        fi
-
-
-        if [[ -n "${postload_hook}" ]]; then
-            eval "${postload_hook}"
-            unset postload_hook
-        fi
-
-        unset ignorelevel postinstall_hook filename plugindir pluginfile
-
+        sourcer "${ignorelevel}" "${filename}" "${plugindir}" "${postload_hook}"
+        unset      ignorelevel      filename      plugindir      postload_hook
+        unset                           github_name      postinstall_hook
     done
-    compile_or_recompile ${files_to_compile}
-    unset files_to_compile
 }
 
+installer() {
+    local plugindir="$1" pluginname="$2" postinstall_hook="$3"
+    if [[ ! -d $1 ]]; then
+
+        printf "\rInstalling \x1B[35m\033[3m${(r:39:)pluginname}\033[0m … "
+
+        if git clone https://github.com/$pluginname.git ${plugindir} 2> /dev/null; then
+            printf "\x1B[32m\033[3mSucces\033[0m!\n"
+            ln -s "${plugindir}" "${PLUGROOT}/${github_name}"
+        else
+            printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$pluginname\033[0m, skipping…\n"
+            return 1
+        fi
+
+
+        if [[ -n ${postinstall_hook} ]]; then
+            printf "\rRunning post-install hooks for \x1B[35m\033[3m${(r:19:)pluginname##*/}\033[0m … " &&\
+            eval "${postinstall_hook}" &&\
+            printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
+            printf "\r\x1B[31mFailed to run post-install hooks for \x1B[35m\033[3m$pluginname\033[0m\n"
+        fi
+    fi
+}
+
+sourcer() {
+    local __ignorelevel="$1" __filename="$2" __plugindir="$3" __postload_hook="$4"
+
+    if [[ ! ${__ignorelevel} == 'ignore' ]]; then
+
+        local __file_to_source
+        # we determine what file to source.
+        if [[ -n $__filename ]]; then
+            __file_to_source="${__plugindir}/${__filename##*/}"
+        else
+            __file_to_source="${__plugindir}/${github_name##*/}.plugin.zsh"
+            if [[ ! -f "${__file_to_source}" ]]; then
+                __file_to_source="${__plugindir}/${${github_name##*/}//.zsh/}.zsh"
+            fi
+        fi
+
+        if [ ! -f "${__file_to_source}" ]; then
+            printf "No file with the name \"${__file_to_source##*/}\"\n"
+            printf "No file with the name \"${__file_to_source}\"\n"
+            return 1
+        fi
+
+        if [[ "${__file_to_source##*.}" == "zsh" ]]; then
+            files_to_compile+="${__file_to_source}"
+        fi
+
+        if [[ ! "${__ignorelevel}" == 'nosource' ]]; then
+            source "$__file_to_source"
+        fi
+    fi
+
+    if [[ -n "${__postload_hook}" ]]; then
+        eval "${__postload_hook}"
+    fi
+}
+
+updater() {
+    local plugin="$1" __plugindir="$2"
+    printf "Updating \x1B[35m\033[3m${(r:40:: :)plugin} "
+    printf "\033[0m … \x1B[32m"
+
+    if git -C ${__plugindir} pull 2> /dev/null; then
+        printf "\033[0m"
+    else
+        printf "\x1B[31mFailed to update\033[0m\n"
+        return 1
+    fi
+}
+
+plug trobjo/zsh-plugin-manager, ignorelevel:nosource
