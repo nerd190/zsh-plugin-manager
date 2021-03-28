@@ -152,7 +152,6 @@ installer() {
         if git clone https://github.com/$pluginname.git ${plugindir} 2> /dev/null; then
             printf "\x1B[32m\033[3mSucces\033[0m!\n"
             if [[ -n $where ]]; then
-                echo $where
                 ln -s "${plugindir}" "${PLUGROOT}/${github_name}"
             fi
         else
