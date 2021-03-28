@@ -18,74 +18,68 @@ declare -aU files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zco
 export PLUGROOT="${ZDOTDIR}/plugins"
 
 plug() {
-# local myarr=($@)
-# set --
-local myvar="$@"
-
-
-case "${1}" in
-
-    (init)
-        if [[ -n ${__asynchronous_plugins} ]]; then
-            plug romkatv/zsh-defer
-            __plug init ${__synchronous_plugins}
-            zsh-defer -1 __plug init ${__asynchronous_plugins}
-        elif [[ -n ${__synchronous_plugins} ]]; then
-            __plug init ${__synchronous_plugins}
-        fi
-        compile_or_recompile ${files_to_compile}
-        ;;
-    (update)
-       if [[ ${#[@]} -gt 1 ]]; then
-            shift
-            for plugin in "$@"; do
-                echo $plugin
-                echo ${__synchronous_plugins}
-                if (( ${__synchronous_plugins[(r)plugin*]} )); then
-                echo "it's in"
-            else
-                echo "it's somewhere else maybe"
+    local myvar="$@"
+    case "${1}" in
+        (init)
+            if [[ -n ${__asynchronous_plugins} ]]; then
+                plug romkatv/zsh-defer
+                __plug init ${__synchronous_plugins}
+                zsh-defer -1 __plug init ${__asynchronous_plugins}
+            elif [[ -n ${__synchronous_plugins} ]]; then
+                __plug init ${__synchronous_plugins}
             fi
-                # __plug update ${@}
-            done
+            compile_or_recompile ${files_to_compile}
+            ;;
+        (update)
+           if [[ ${#[@]} -gt 1 ]]; then
+                shift
+                for plugin in "$@"; do
+                    echo $plugin
+                    echo ${__synchronous_plugins}
+                    if (( ${__synchronous_plugins[(r)plugin*]} )); then
+                    echo "it's in"
+                else
+                    echo "it's somewhere else maybe"
+                fi
+                    # __plug update ${@}
+                done
 
-       else
-            __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
-       fi
-        compile_or_recompile ${files_to_compile}
-        ;;
-    (install)
-        echo to come
-        # __plug install ${__synchronous_plugins} ${__asynchronous_plugins}
-        if [[ ${#[@]} -gt 1  ]]; then
-            printf "\r\x1B[31mCannot install plugins interactively, please load from .zshrc\033[0m\n"
-        fi
-        ;;
-    (async)
-        shift
-        __asynchronous_plugins+=${${${myvar//,[[:blank:]]/│}//,/│}:6}
-        ;;
-    (*)
-        if [[ ${myvar} != *"/"* ]]; then
-            printf "\r\x1B[3m${myvar}\033[0m does not look like a plugin and is not an action\033[0m\n"
-            return 1
-        fi
-        __synchronous_plugins+=${${myvar//,[[:blank:]]/│}//,/│}
-        ;;
-esac
-
+           else
+                __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
+           fi
+            compile_or_recompile ${files_to_compile}
+            ;;
+        (install)
+            echo to come
+            # __plug install ${__synchronous_plugins} ${__asynchronous_plugins}
+            if [[ ${#[@]} -gt 1  ]]; then
+                printf "\r\x1B[31mCannot install plugins interactively, please load from .zshrc\033[0m\n"
+            fi
+            ;;
+        (async)
+            shift
+            __asynchronous_plugins+=${${myvar//,[[:blank:]]/│}:6}
+            ;;
+        (*)
+            if [[ ${myvar} != *"/"* ]]; then
+                printf "\r\x1B[3m${myvar}\033[0m does not look like a plugin and is not an action\033[0m\n"
+                return 1
+            fi
+            __synchronous_plugins+=${myvar//,[[:blank:]]/│}
+            ;;
+    esac
 }
 
 
 compile_or_recompile() {
-  local file
-  for file in "$@"; do
-    if [[ -f $file ]] && [[ ! -f ${file}.zwc ]] \
-      || [[ $file -nt ${file}.zwc ]]; then
-          zcompile "$file"
-      fi
-  done
-}
+    local file
+    for file in "$@"; do
+        if [[ -f $file ]] && [[ ! -f ${file}.zwc ]] \
+            || [[ $file -nt ${file}.zwc ]]; then
+                zcompile "$file"
+            fi
+        done
+    }
 
 __plug() {
     local myarr=($@)
