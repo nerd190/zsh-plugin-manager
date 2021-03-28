@@ -85,13 +85,12 @@ __plug() {
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
-        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook key value where file_to_source
+        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where file_to_source
         # split strings by args
         parts=("${(@s[│])plugin}")
         local github_name="${parts[1]}"
 
         for part in "${parts[@]:1}"; do
-
             key="${part%%:*}"
             value="${part#*:}"
             case "${key}" in
@@ -117,7 +116,7 @@ __plug() {
                 local filename="${(e)value}"
                 ;;
                 (*)
-                printf "\x1B[31mDid not understand \033[0m\""${part}"\"\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
+                printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
                 continue 2
                 ;;
             esac
