@@ -104,7 +104,7 @@ __plug() {
             value="${part#*:}"
             case "${key}" in
                 (if)
-                eval "${value}" > /dev/null 2>&1 || break 2
+                eval "${value}" > /dev/null 2>&1 || continue 2
                 ;;
                 (ignorelevel)
                 local ignorelevel="${value}"
@@ -125,8 +125,8 @@ __plug() {
                 local filename="${(e)value}"
                 ;;
                 (*)
-                printf "\n\x1B[31mDid not understand \033[0m\""${part}"\"\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
-                continue
+                printf "\x1B[31mDid not understand \033[0m\""${part}"\"\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
+                continue 1
                 ;;
             esac
         done
