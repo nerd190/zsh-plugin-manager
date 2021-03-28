@@ -149,7 +149,7 @@ installer() {
 
         printf "\rInstalling \x1B[35m\033[3m${(r:39:)pluginname}\033[0m … "
 
-        if git clone https://github.com/$pluginname.git ${plugindir} 2> /dev/null; then
+        if git clone -–depth 1 https://github.com/$pluginname.git ${plugindir} 2> /dev/null; then
             printf "\x1B[32m\033[3mSucces\033[0m!\n"
             if [[ -n $where ]]; then
                 ln -s "${plugindir}" "${PLUGROOT}/${github_name}"
