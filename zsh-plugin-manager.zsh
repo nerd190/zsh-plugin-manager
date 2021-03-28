@@ -149,7 +149,14 @@ installer() {
 
         printf "\rInstalling \x1B[35m\033[3m${(r:39:)pluginname}\033[0m … "
 
-        if git clone --depth=1 https://github.com/$pluginname.git ${plugindir} 2> /dev/null; then
+        local url
+        if [[ "${pluginname:0:5}" == "https" ]]; then
+            url="${pluginname}"
+        else
+            url="https://github.com/${pluginname}.git"
+        fi
+
+        if git clone --depth=1 "${url}" ${plugindir} 2> /dev/null; then
             printf "\x1B[32m\033[3mSucces\033[0m!\n"
             if [[ -n $where ]]; then
                 ln -s "${plugindir}" "${PLUGROOT}/${github_name}"
