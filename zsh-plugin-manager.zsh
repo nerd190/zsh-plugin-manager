@@ -48,6 +48,8 @@ plug() {
             __update_plugins+="trobjo/zsh-plugin-manager"
             __update_plugins+=${__synchronous_plugins} ${__asynchronous_plugins}
             __plug update ${__update_plugins}
+
+
         fi
         compile_or_recompile ${__files_to_compile}
         ;;
