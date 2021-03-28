@@ -120,7 +120,7 @@ __plug() {
                 ;;
                 (*)
                 printf "\x1B[31mDid not understand \033[0m\""${part}"\"\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
-                continue 1
+                continue 2
                 ;;
             esac
         done
