@@ -87,7 +87,7 @@ __plug() {
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
-        unset ignorelevel filename plugin_local_location postload_hook github_name postinstall_hook key value where
+        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook key value where
         # split strings by args
         parts=("${(@s[│])plugin}")
         local github_name="${parts[1]}"
@@ -127,9 +127,9 @@ __plug() {
 
 
         if [ -z $where ]; then
-            plugin_local_location="${PLUGROOT}/$github_name"
+            plugin_dir_local_location="${PLUGROOT}/$github_name"
         else
-            plugin_local_location=${where}
+            plugin_dir_local_location=${where}
         fi
 
         local action="${myarr[1]}"
@@ -138,7 +138,7 @@ __plug() {
             printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} "
             printf "\033[0m … \x1B[32m"
 
-            if git -C ${plugin_local_location} pull 2> /dev/null; then
+            if git -C ${plugin_dir_local_location} pull 2> /dev/null; then
                 printf "\033[0m"
             else
                 printf "\x1B[31mFailed to update\033[0m\n"
@@ -146,18 +146,18 @@ __plug() {
             fi
 
         elif [[ $action == 'init' ]]; then
-            if [[ ! -d "${plugin_local_location}" ]]; then
+            if [[ ! -d "${plugin_dir_local_location}" ]]; then
                 printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
 
-                if git clone --depth=1 "https://github.com/${github_name}.git" ${plugin_local_location} 2> /dev/null; then
+                if git clone --depth=1 "https://github.com/${github_name}.git" ${plugin_dir_local_location} 2> /dev/null; then
                     printf "\x1B[32m\033[3mSucces\033[0m!\n"
                     if [[ -n $where ]]; then
-                        ln -s "${plugin_local_location}" "${PLUGROOT}/${github_name}"
+                        ln -s "${plugin_dir_local_location}" "${PLUGROOT}/${github_name}"
                     fi
                 else
                     printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
                     printf "Backtrace:\n"
-                    printf "plugin_local_location: \x1B[32m${plugin_local_location}\033[0m\n"
+                    printf "plugin_dir_local_location: \x1B[32m${plugin_dir_local_location}\033[0m\n"
                     printf "github_name: \x1B[32m${github_name}\033[0m\n"
                     continue
                 fi
@@ -175,11 +175,11 @@ __plug() {
 
             # we determine what file to source.
             if [[ -n $filename ]]; then
-                __file_to_source="${plugin_local_location}/${filename}"
+                __file_to_source="${plugin_dir_local_location}/${filename}"
             else
-                __file_to_source="${plugin_local_location}/${github_name##*/}.plugin.zsh"
+                __file_to_source="${plugin_dir_local_location}/${github_name##*/}.plugin.zsh"
                 if [[ ! -f "${__file_to_source}" ]]; then
-                    __file_to_source="${plugin_local_location}/${${github_name##*/}//.zsh/}.zsh"
+                    __file_to_source="${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh"
                 fi
             fi
 
