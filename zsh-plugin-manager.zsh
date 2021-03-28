@@ -110,7 +110,7 @@ __plug() {
                 local postload_hook="${value}"
                 ;;
                 (env)
-                eval "${(e)value}"
+                export "${(e)value}"
                 ;;
                 (where)
                 local where="${(e)value}"
