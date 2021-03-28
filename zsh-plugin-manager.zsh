@@ -13,7 +13,7 @@
 
 declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
-declare -aU files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zcompdump")
+declare -aU __files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zcompdump")
 
 export PLUGROOT="${ZDOTDIR}/plugins"
 
@@ -21,52 +21,50 @@ plug() {
     local myvar="$@"
     case "${1}" in
         (init)
-            if [[ -n ${__asynchronous_plugins} ]]; then
-                plug romkatv/zsh-defer
-                __plug init ${__synchronous_plugins}
-                zsh-defer -1 __plug init ${__asynchronous_plugins}
-            elif [[ -n ${__synchronous_plugins} ]]; then
-                __plug init ${__synchronous_plugins}
-            fi
-            compile_or_recompile ${files_to_compile}
-            ;;
+        if [[ -n ${__asynchronous_plugins} ]]; then
+            plug romkatv/zsh-defer
+            __plug init ${__synchronous_plugins}
+            zsh-defer -1 __plug init ${__asynchronous_plugins}
+        elif [[ -n ${__synchronous_plugins} ]]; then
+            __plug init ${__synchronous_plugins}
+        fi
+        compile_or_recompile ${__files_to_compile}
+        ;;
         (update)
-           if [[ ${#[@]} -gt 1 ]]; then
-                shift
-                for plugin in "$@"; do
-                    echo $plugin
-                    echo ${__synchronous_plugins}
-                    if (( ${__synchronous_plugins[(r)plugin*]} )); then
+        if [[ ${#[@]} -gt 1 ]]; then
+            shift
+            for plugin in "$@"; do
+                echo $plugin
+                echo ${__synchronous_plugins}
+                if (( ${__synchronous_plugins[(r)plugin*]} )); then
                     echo "it's in"
                 else
                     echo "it's somewhere else maybe"
                 fi
-                    # __plug update ${@}
-                done
+            done
 
-           else
-                __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
-           fi
-            compile_or_recompile ${files_to_compile}
-            ;;
+        else
+            __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
+        fi
+        compile_or_recompile ${__files_to_compile}
+        ;;
         (install)
-            echo to come
-            # __plug install ${__synchronous_plugins} ${__asynchronous_plugins}
-            if [[ ${#[@]} -gt 1  ]]; then
-                printf "\r\x1B[31mCannot install plugins interactively, please load from .zshrc\033[0m\n"
-            fi
-            ;;
+        echo to come
+        if [[ ${#[@]} -gt 1  ]]; then
+            printf "\r\x1B[31mCannot install plugins interactively, please load from .zshrc\033[0m\n"
+        fi
+        ;;
         (async)
-            shift
-            __asynchronous_plugins+=${${myvar//,[[:blank:]]/│}:6}
-            ;;
+        shift
+        __asynchronous_plugins+=${${myvar//,[[:blank:]]/│}:6}
+        ;;
         (*)
-            if [[ ${myvar} != *"/"* ]]; then
-                printf "\r\x1B[3m${myvar}\033[0m does not look like a plugin and is not an action\033[0m\n"
-                return 1
-            fi
-            __synchronous_plugins+=${myvar//,[[:blank:]]/│}
-            ;;
+        if [[ ${myvar} != *"/"* ]]; then
+            printf "\r\x1B[3m${myvar}\033[0m does not look like a plugin and is not an action\033[0m\n"
+            return 1
+        fi
+        __synchronous_plugins+=${myvar//,[[:blank:]]/│}
+        ;;
     esac
 }
 
@@ -87,7 +85,7 @@ __plug() {
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
-        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook key value where
+        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook key value where file_to_source
         # split strings by args
         parts=("${(@s[│])plugin}")
         local github_name="${parts[1]}"
@@ -175,25 +173,25 @@ __plug() {
 
             # we determine what file to source.
             if [[ -n $filename ]]; then
-                __file_to_source="${plugin_dir_local_location}/${filename}"
+                file_to_source="${plugin_dir_local_location}/${filename}"
             else
-                __file_to_source="${plugin_dir_local_location}/${github_name##*/}.plugin.zsh"
-                if [[ ! -f "${__file_to_source}" ]]; then
-                    __file_to_source="${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh"
+                file_to_source="${plugin_dir_local_location}/${github_name##*/}.plugin.zsh"
+                if [[ ! -f "${file_to_source}" ]]; then
+                    file_to_source="${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh"
                 fi
             fi
 
-            if [ ! -f "${__file_to_source}" ]; then
-                printf "No file with the name \"${__file_to_source}\"\n"
+            if [ ! -f "${file_to_source}" ]; then
+                printf "No file with the name \"${file_to_source}\"\n"
                 continue
             fi
 
-            if [[ "${__file_to_source##*.}" == "zsh" ]]; then
-                files_to_compile+="${__file_to_source}"
+            if [[ "${file_to_source##*.}" == "zsh" ]]; then
+                __files_to_compile+="${file_to_source}"
             fi
 
             if [[ ! "${ignorelevel}" == 'nosource' ]]; then
-                source "$__file_to_source"
+                source "$file_to_source"
             fi
         fi
 
