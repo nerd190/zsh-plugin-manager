@@ -87,7 +87,7 @@ __plug() {
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
-        unset ignorelevel filename plugindir postload_hook github_name postinstall_hook key value
+        unset ignorelevel filename plugindir postload_hook github_name postinstall_hook key value where
         # split strings by args
         parts=("${(@s[│])plugin}")
         local github_name="${parts[1]}"
@@ -130,7 +130,6 @@ __plug() {
             plugindir="${ZDOTDIR}/plugins/$github_name"
         else
             plugindir=${where}
-            unset where
         fi
 
         local action="${myarr[1]}"
