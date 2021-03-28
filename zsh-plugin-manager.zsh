@@ -198,6 +198,7 @@ __plug() {
             eval "${postload_hook}"
         fi
     done
+    unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where file_to_source
 }
 
 plug trobjo/zsh-plugin-manager, ignorelevel:nosource
