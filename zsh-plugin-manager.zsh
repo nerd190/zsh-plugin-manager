@@ -141,7 +141,7 @@ __plug() {
                 prefix="${github_name:0:4}"
                 if [[ "$prefix" == 'http' ]]; then
                     filename="/tmp/zsh-plugin-manager/${github_name##*/}"
-                    fetchcommand='curl -L --create-dirs -O --output-dir /tmp/zsh-plugin-manager "$github_name"'
+                    fetchcommand='curl -L -O "$github_name"'
                 elif [[ "$prefix" == 'git@' ]]; then
                     fetchcommand='git clone --depth=1 "$github_name" ${plugin_dir_local_location}'
                 else
