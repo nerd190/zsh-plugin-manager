@@ -77,7 +77,7 @@ __plug() {
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
-        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where files_to_source
+        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where files_to_source fetchcommand
         declare -aU files_to_source
         # split strings by args
         parts=("${(@s[│])plugin}")
@@ -135,14 +135,25 @@ __plug() {
             fi
 
         elif [[ $action == 'init' ]]; then
-            if [[ ! -d "${plugin_dir_local_location}" ]]; then
+            if [[ ! -e "${plugin_dir_local_location}" ]]; then
                 printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
 
-                if git clone --depth=1 "https://github.com/${github_name}.git" ${plugin_dir_local_location} 2> /dev/null; then
+                prefix="${github_name:0:4}"
+                if [[ "$prefix" == 'http' ]]; then
+                    filename="/tmp/zsh-plugin-manager/${github_name##*/}"
+                    fetchcommand='curl -L --create-dirs -O --output-dir /tmp/zsh-plugin-manager "$github_name"'
+                elif [[ "$prefix" == 'git@' ]]; then
+                    fetchcommand='git clone --depth=1 "$github_name" ${plugin_dir_local_location}'
+                else
+                    # we assume github
+                    fetchcommand='git clone --depth=1 "https://github.com/${github_name}.git" ${plugin_dir_local_location}'
+                fi
+
+                if eval "${fetchcommand}" 2> /dev/null; then
                     printf "\x1B[32m\033[3mSucces\033[0m!\n"
-                    if [[ -n $where ]]; then
-                        ln -s "${plugin_dir_local_location}" "${PLUGROOT}/${github_name}"
-                    fi
+                    # if [[ -n $where ]]; then
+                    #     ln -s "${plugin_dir_local_location}" "${PLUGROOT}/$github_name"
+                    # fi
                 else
                     printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
                     printf "Backtrace:\n"
@@ -153,7 +164,7 @@ __plug() {
 
                 if [[ -n ${postinstall_hook} ]]; then
                     printf "\rRunning post-install hooks for \x1B[35m\033[3m${(r:19:)github_name##*/}\033[0m … " &&\
-                    eval "${postinstall_hook}" &&\
+                    eval "${postinstall_hook}" 1> /dev/null &&\
                     printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
                     printf "\r\x1B[31mFailed to run post-install hooks for \x1B[35m\033[3m$github_name\033[0m\n"
                 fi
@@ -161,7 +172,6 @@ __plug() {
         fi
 
         if [[ ! ${ignorelevel} == 'ignore' ]]; then
-
             # we determine what file to source.
             if [[ -n $filename ]]; then
                 for file in "$filename[@]"; do
@@ -178,9 +188,7 @@ __plug() {
                 if [ ! -f "${file}" ]; then
                     printf "No file with the name \"${file}\"\n"
                 else
-                    compile_or_recompile ${file}
-                fi
-                if [[ ! "${ignorelevel}" == 'nosource' ]]; then
+                    compile_or_recompile "${file}"
                     source "$file"
                 fi
             done
@@ -190,9 +198,9 @@ __plug() {
             eval "${postload_hook}"
         fi
     done
-    unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where file_to_source
+    unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where files_to_source fetchcommand
 }
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zcompdump"
-plug trobjo/zsh-plugin-manager, ignorelevel:nosource
+
