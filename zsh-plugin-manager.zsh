@@ -175,7 +175,7 @@ __plug() {
             # we determine what file to source.
             if [[ -n $filename_to_source ]]; then
                 # for file in "$filename_to_source[@]"; do
-                    file_to_source="${plugin_dir_local_location}/${file}"
+                    file_to_source="${plugin_dir_local_location}/${filename_to_source}"
                 # done
             else
                 file_to_source="${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh"
