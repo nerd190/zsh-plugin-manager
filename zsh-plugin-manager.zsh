@@ -33,8 +33,7 @@ plug() {
         ;;
         (update)
         if [[ ${#myarr[@]} -gt 1 ]]; then
-            shift
-            for plugin in "$@"; do
+            for plugin in "$myarr[@]"; do
                 echo $plugin
                 echo ${__synchronous_plugins}
                 if (( ${__synchronous_plugins[(r)plugin*]} )); then
