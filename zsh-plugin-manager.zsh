@@ -18,8 +18,9 @@ declare -aU __files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.z
 export PLUGROOT="${ZDOTDIR}/plugins"
 
 plug() {
-    local myvar="$@"
-    case "${1}" in
+    local myarr=($@)
+    set --
+    case "${myarr[1]}" in
         (init)
         if [[ -n ${__asynchronous_plugins} ]]; then
             plug romkatv/zsh-defer
@@ -31,7 +32,7 @@ plug() {
         compile_or_recompile ${__files_to_compile}
         ;;
         (update)
-        if [[ ${#[@]} -gt 1 ]]; then
+        if [[ ${#myarr[@]} -gt 1 ]]; then
             shift
             for plugin in "$@"; do
                 echo $plugin
@@ -50,20 +51,19 @@ plug() {
         ;;
         (install)
         echo to come
-        if [[ ${#[@]} -gt 1  ]]; then
+        if [[ ${#myarr[@]} -gt 1  ]]; then
             printf "\r\x1B[31mCannot install plugins interactively, please load from .zshrc\033[0m\n"
         fi
         ;;
         (async)
-        shift
-        __asynchronous_plugins+=${${myvar//,[[:blank:]]/│}:6}
+        __asynchronous_plugins+="${${myarr//,[[:blank:]]/│}:6}"
         ;;
         (*)
-        if [[ ${myvar} != *"/"* ]]; then
-            printf "\r\x1B[3m${myvar}\033[0m does not look like a plugin and is not an action\033[0m\n"
+        if [[ "${myarr}" != *"/"* ]]; then
+            printf "\r\x1B[3m${myarr}\033[0m does not look like a plugin and is not an action\033[0m\n"
             return 1
         fi
-        __synchronous_plugins+=${myvar//,[[:blank:]]/│}
+        __synchronous_plugins+="${myarr//,[[:blank:]]/│}"
         ;;
     esac
 }
@@ -185,9 +185,7 @@ __plug() {
                 continue
             fi
 
-            if [[ "${file_to_source##*.}" == "zsh" ]]; then
-                __files_to_compile+="${file_to_source}"
-            fi
+            __files_to_compile+="${file_to_source}"
 
             if [[ ! "${ignorelevel}" == 'nosource' ]]; then
                 source "$file_to_source"
