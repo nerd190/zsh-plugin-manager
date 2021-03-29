@@ -28,7 +28,6 @@ plug() {
         elif [[ -n ${__synchronous_plugins} ]]; then
             __plug init ${__synchronous_plugins}
         fi
-        compile_or_recompile ${__files_to_compile}
         ;;
         (update)
         if [[ ${#myarr[@]} -gt 1 ]]; then
@@ -45,7 +44,6 @@ plug() {
         else
             __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
         fi
-        compile_or_recompile ${__files_to_compile}
         ;;
         (install)
         echo to come
@@ -68,13 +66,10 @@ plug() {
 
 
 compile_or_recompile() {
-    local file
-    for file in "$@"; do
-        if [[ -f $file ]] && [[ ! -f ${file}.zwc ]] \
-            || [[ $file -nt ${file}.zwc ]]; then
-                zcompile "$file"
+        if [[ -f "${1}" ]] && [[ ! -f "${1}.zwc" ]] \
+            || [[ "${1}" -nt "${1}.zwc" ]]; then
+                zcompile "$1"
             fi
-        done
     }
 
 __plug() {
@@ -183,7 +178,8 @@ __plug() {
                 continue
             fi
 
-            __files_to_compile+="${file_to_source}"
+            compile_or_recompile ${file_to_source}
+
 
             if [[ ! "${ignorelevel}" == 'nosource' ]]; then
                 source "$file_to_source"
@@ -197,4 +193,6 @@ __plug() {
     unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where file_to_source
 }
 
+compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
+compile_or_recompile "${ZDOTDIR:-$HOME}/.zcompdump"
 plug trobjo/zsh-plugin-manager, ignorelevel:nosource
