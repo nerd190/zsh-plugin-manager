@@ -179,7 +179,7 @@ __plug() {
                 # done
             else
                 file_to_source="${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh"
-                if [[ ! -f "${file_to_source[1]}" ]]; then
+                if [[ ! -f "${file_to_source}" ]]; then
                     file_to_source="${plugin_dir_local_location}/${github_name##*/}.plugin.zsh"
                 fi
             fi
