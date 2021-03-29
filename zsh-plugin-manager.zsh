@@ -64,7 +64,6 @@ plug() {
     esac
 }
 
-
 compile_or_recompile() {
         if [[ -f "${1}" ]] && [[ ! -f "${1}.zwc" ]] \
             || [[ "${1}" -nt "${1}.zwc" ]]; then
@@ -78,7 +77,8 @@ __plug() {
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
-        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where file_to_source
+        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where files_to_source
+        declare -aU files_to_source
         # split strings by args
         parts=("${(@s[│])plugin}")
         local github_name="${parts[1]}"
@@ -105,8 +105,8 @@ __plug() {
                 (where)
                 local where="${(e)value}"
                 ;;
-                (filename)
-                local filename="${(e)value}"
+                (source)
+                filename+=("${(e)value}")
                 ;;
                 (*)
                 printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
@@ -114,7 +114,6 @@ __plug() {
                 ;;
             esac
         done
-
 
         if [ -z $where ]; then
             plugin_dir_local_location="${PLUGROOT}/$github_name"
@@ -165,25 +164,26 @@ __plug() {
 
             # we determine what file to source.
             if [[ -n $filename ]]; then
-                file_to_source="${plugin_dir_local_location}/${filename}"
+                for file in "$filename[@]"; do
+                    files_to_source+="${plugin_dir_local_location}/${file}"
+                done
             else
-                file_to_source="${plugin_dir_local_location}/${github_name##*/}.plugin.zsh"
-                if [[ ! -f "${file_to_source}" ]]; then
-                    file_to_source="${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh"
+                files_to_source=("${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh")
+                if [[ ! -f "${files_to_source[1]}" ]]; then
+                    files_to_source=("${plugin_dir_local_location}/${github_name##*/}.plugin.zsh")
                 fi
             fi
 
-            if [ ! -f "${file_to_source}" ]; then
-                printf "No file with the name \"${file_to_source}\"\n"
-                continue
-            fi
-
-            compile_or_recompile ${file_to_source}
-
-
-            if [[ ! "${ignorelevel}" == 'nosource' ]]; then
-                source "$file_to_source"
-            fi
+            for file in "$files_to_source[@]"; do
+                if [ ! -f "${file}" ]; then
+                    printf "No file with the name \"${file}\"\n"
+                else
+                    compile_or_recompile ${file}
+                fi
+                if [[ ! "${ignorelevel}" == 'nosource' ]]; then
+                    source "$file"
+                fi
+            done
         fi
 
         if [[ -n "${postload_hook}" ]]; then
