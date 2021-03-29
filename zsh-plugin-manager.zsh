@@ -13,7 +13,6 @@
 
 declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
-declare -aU __files_to_compile=("${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zcompdump")
 
 export PLUGROOT="${ZDOTDIR}/plugins"
 
