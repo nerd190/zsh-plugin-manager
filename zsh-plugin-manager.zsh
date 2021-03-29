@@ -77,8 +77,8 @@ __plug() {
 
     local plugin
     for plugin in "${myarr[@]:1}"; do
-        unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where files_to_source fetchcommand
-        declare -aU files_to_source
+        unset ignorelevel filename_to_source plugin_dir_local_location postload_hook github_name postinstall_hook where file_to_source fetchcommand
+        # declare -aU file_to_source
         # split strings by args
         parts=("${(@s[│])plugin}")
         local github_name="${parts[1]}"
@@ -106,7 +106,7 @@ __plug() {
                 local where="${(e)value}"
                 ;;
                 (source)
-                filename+=("${(e)value}")
+                filename_to_source+="${(e)value}"
                 ;;
                 (*)
                 printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
@@ -140,7 +140,7 @@ __plug() {
 
                 prefix="${github_name:0:4}"
                 if [[ "$prefix" == 'http' ]]; then
-                    filename="${github_name##*/}"
+                    filename_to_source="${github_name##*/}"
                     fetchcommand='curl -L -O "$github_name"'
                 elif [[ "$prefix" == 'git@' ]]; then
                     fetchcommand='git clone --depth=1 "$github_name" ${plugin_dir_local_location}'
@@ -173,32 +173,32 @@ __plug() {
 
         if [[ ! ${ignorelevel} == 'ignore' ]]; then
             # we determine what file to source.
-            if [[ -n $filename ]]; then
-                for file in "$filename[@]"; do
-                    files_to_source+="${plugin_dir_local_location}/${file}"
-                done
+            if [[ -n $filename_to_source ]]; then
+                # for file in "$filename_to_source[@]"; do
+                    file_to_source="${plugin_dir_local_location}/${file}"
+                # done
             else
-                files_to_source=("${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh")
-                if [[ ! -f "${files_to_source[1]}" ]]; then
-                    files_to_source=("${plugin_dir_local_location}/${github_name##*/}.plugin.zsh")
+                file_to_source="${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh"
+                if [[ ! -f "${file_to_source[1]}" ]]; then
+                    file_to_source="${plugin_dir_local_location}/${github_name##*/}.plugin.zsh"
                 fi
             fi
 
-            for file in "$files_to_source[@]"; do
-                if [ ! -f "${file}" ]; then
-                    printf "No file with the name \"${file}\"\n"
+            # for file in "$file_to_source[@]"; do
+                if [ ! -f "${file_to_source}" ]; then
+                    printf "No file with the name \"${file_to_source}\"\n"
                 else
-                    compile_or_recompile "${file}"
-                    source "$file"
+                    compile_or_recompile "${file_to_source}"
+                    source "$file_to_source"
                 fi
-            done
+            # done
         fi
 
         if [[ -n "${postload_hook}" ]]; then
             eval "${postload_hook}"
         fi
     done
-    unset ignorelevel filename plugin_dir_local_location postload_hook github_name postinstall_hook where files_to_source fetchcommand
+    unset ignorelevel filename_to_source plugin_dir_local_location postload_hook github_name postinstall_hook where file_to_source fetchcommand
 }
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
