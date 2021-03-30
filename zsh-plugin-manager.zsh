@@ -203,4 +203,4 @@ __plug() {
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zcompdump"
-
+compile_or_recompile "$0"
