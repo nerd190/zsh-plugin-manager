@@ -106,7 +106,7 @@ __plug() {
                 local where="${(e)value}"
                 ;;
                 (source)
-                filename+="${(e)value}"
+                filename+=("${(e)value}")
                 ;;
                 (*)
                 printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
@@ -175,7 +175,7 @@ __plug() {
             # we determine what filename to source.
             if [[ -n $filename ]]; then
                 for file in "$filename[@]"; do
-                    files+="${plugin_dir_local_location}/${file}"
+                    files+=("${plugin_dir_local_location}/${file}")
                 done
             else
                 files=("${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh")
