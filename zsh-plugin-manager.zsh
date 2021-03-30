@@ -69,6 +69,7 @@ __plug() {
     local myarr=($@)
     set --
 
+    local action="${myarr[1]}"
     local plugin
     for plugin in "${myarr[@]:1}"; do
         unset ignorelevel filename plugin_dir_local_location postload_hook github_name install_hook where files fetchcommand
@@ -115,7 +116,6 @@ __plug() {
             plugin_dir_local_location=${where}
         fi
 
-        local action="${myarr[1]}"
         if [[ $action == 'update' ]]; then
 
             printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} "
