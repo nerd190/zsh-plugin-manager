@@ -28,6 +28,11 @@ plug() {
             __plug init ${__synchronous_plugins}
         fi
         ;;
+        (remove)
+            for plugin in "${args[@]:1}"; do
+                rm -rf $(readlink -f "$PLUGROOT/${plugin}") "$PLUGROOT/${plugin}"
+            done
+        ;;
         (update)
         if [[ ${#args[@]} -gt 1 ]]; then
             for plugin in "$args[@]"; do
@@ -144,9 +149,13 @@ __plug() {
 
                 if eval "${fetchcommand}" 2> /dev/null; then
                     printf "\x1B[32m\033[3mSucces\033[0m!\n"
-                    # if [[ -n $where ]]; then
-                    #     ln -s "${plugin_dir_local_location}" "${PLUGROOT}/$github_name"
-                    # fi
+                    if [[ -n $where ]]; then
+                        if [[ $prefix == "http" ]]; then
+                            ln -s "${plugin_dir_local_location}" "${PLUGROOT}/${plugin_dir_local_location##*/}"
+                        else
+                            ln -s "${plugin_dir_local_location}" "${PLUGROOT}/$github_name"
+                        fi
+                    fi
                 else
                     printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
                     printf "Backtrace:\n"
