@@ -45,12 +45,6 @@ plug() {
             __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
         fi
         ;;
-        (install)
-        echo to come
-        if [[ ${#myarr[@]} -gt 1  ]]; then
-            printf "\r\x1B[31mCannot install plugins interactively, please load from .zshrc\033[0m\n"
-        fi
-        ;;
         (async)
         __asynchronous_plugins+="${${myarr//,[[:blank:]]/│}:6}"
         ;;
