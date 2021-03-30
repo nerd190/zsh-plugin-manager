@@ -45,14 +45,14 @@ plug() {
         fi
         ;;
         (async)
-        __asynchronous_plugins+="${${myarr//,[[:blank:]]/│}:6}"
+        __asynchronous_plugins+="${myarr:6}"
         ;;
         (*)
         if [[ "${myarr}" != *"/"* ]]; then
             printf "\r\x1B[3m${myarr}\033[0m does not look like a plugin and is not an action\033[0m\n"
             return 1
         fi
-        __synchronous_plugins+="${myarr//,[[:blank:]]/│}"
+        __synchronous_plugins+="${myarr}"
         ;;
     esac
 }
@@ -74,7 +74,7 @@ __plug() {
         unset ignorelevel filename plugin_dir_local_location postload_hook github_name install_hook where files fetchcommand
         declare -aU files
         # split strings by args
-        parts=("${(@s[│])plugin}")
+        parts=("${(@s[, ])plugin}")
         local github_name="${parts[1]}"
 
         for part in "${parts[@]:1}"; do
