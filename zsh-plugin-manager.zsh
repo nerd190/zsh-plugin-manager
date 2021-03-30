@@ -17,9 +17,9 @@ declare -aU __asynchronous_plugins
 export PLUGROOT="${ZDOTDIR}/plugins"
 
 plug() {
-    local argv=($@)
+    local args=($@)
     set --
-    case "${argv[1]}" in
+    case "${args[1]}" in
         (init)
         if [[ -n ${__asynchronous_plugins} ]]; then
             __plug init ${__synchronous_plugins} romkatv/zsh-defer
@@ -29,8 +29,8 @@ plug() {
         fi
         ;;
         (update)
-        if [[ ${#argv[@]} -gt 1 ]]; then
-            for plugin in "$argv[@]"; do
+        if [[ ${#args[@]} -gt 1 ]]; then
+            for plugin in "$args[@]"; do
                 echo $plugin
                 echo ${__synchronous_plugins}
                 if (( ${__synchronous_plugins[(r)plugin*]} )); then
@@ -45,14 +45,14 @@ plug() {
         fi
         ;;
         (async)
-        __asynchronous_plugins+="${argv:6}"
+        __asynchronous_plugins+="${args:6}"
         ;;
         (*)
-        if [[ "${argv}" != *"/"* ]]; then
-            printf "\r\x1B[3m${argv}\033[0m does not look like a plugin and is not an action\033[0m\n"
+        if [[ "${args}" != *"/"* ]]; then
+            printf "\r\x1B[3m${args}\033[0m does not look like a plugin and is not an action\033[0m\n"
             return 1
         fi
-        __synchronous_plugins+="${argv}"
+        __synchronous_plugins+="${args}"
         ;;
     esac
 }
