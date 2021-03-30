@@ -22,8 +22,7 @@ plug() {
     case "${myarr[1]}" in
         (init)
         if [[ -n ${__asynchronous_plugins} ]]; then
-            plug romkatv/zsh-defer
-            __plug init ${__synchronous_plugins}
+            __plug init ${__synchronous_plugins} romkatv/zsh-defer
             zsh-defer -1 __plug init ${__asynchronous_plugins}
         elif [[ -n ${__synchronous_plugins} ]]; then
             __plug init ${__synchronous_plugins}
