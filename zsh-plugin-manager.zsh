@@ -106,7 +106,7 @@ __plug() {
                 local where="${(e)value}"
                 ;;
                 (source)
-                filename_to_source+="${(e)value}"
+                filename_to_source="${(e)value}"
                 ;;
                 (*)
                 printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
