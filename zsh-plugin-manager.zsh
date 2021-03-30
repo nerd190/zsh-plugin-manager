@@ -164,9 +164,9 @@ __plug() {
 
                 if [[ -n ${install_hook} ]]; then
                     printf "\rRunning install hook for \x1B[35m\033[3m${(r:25:)github_name##*/}\033[0m …"
-                    eval "${postinstall_hook}" 1> /dev/null &&\
+                    eval "${install_hook}" 1> /dev/null &&\
                     printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
-                    printf "\r\x1B[31mFailed to run post-install hooks for \x1B[35m\033[3m$github_name\033[0m\n"
+                    printf "\r\x1B[31mFailed to run install hook for \x1B[35m\033[3m$github_name\033[0m\n"
                 fi
             fi
         fi
