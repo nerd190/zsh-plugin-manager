@@ -17,9 +17,9 @@ declare -aU __asynchronous_plugins
 export PLUGROOT="${ZDOTDIR}/plugins"
 
 plug() {
-    local myarr=($@)
+    local argv=($@)
     set --
-    case "${myarr[1]}" in
+    case "${argv[1]}" in
         (init)
         if [[ -n ${__asynchronous_plugins} ]]; then
             __plug init ${__synchronous_plugins} romkatv/zsh-defer
@@ -29,8 +29,8 @@ plug() {
         fi
         ;;
         (update)
-        if [[ ${#myarr[@]} -gt 1 ]]; then
-            for plugin in "$myarr[@]"; do
+        if [[ ${#argv[@]} -gt 1 ]]; then
+            for plugin in "$argv[@]"; do
                 echo $plugin
                 echo ${__synchronous_plugins}
                 if (( ${__synchronous_plugins[(r)plugin*]} )); then
@@ -45,14 +45,14 @@ plug() {
         fi
         ;;
         (async)
-        __asynchronous_plugins+="${myarr:6}"
+        __asynchronous_plugins+="${argv:6}"
         ;;
         (*)
-        if [[ "${myarr}" != *"/"* ]]; then
-            printf "\r\x1B[3m${myarr}\033[0m does not look like a plugin and is not an action\033[0m\n"
+        if [[ "${argv}" != *"/"* ]]; then
+            printf "\r\x1B[3m${argv}\033[0m does not look like a plugin and is not an action\033[0m\n"
             return 1
         fi
-        __synchronous_plugins+="${myarr}"
+        __synchronous_plugins+="${argv}"
         ;;
     esac
 }
@@ -65,12 +65,12 @@ compile_or_recompile() {
     }
 
 __plug() {
-    local myarr=($@)
+    local pluglist=($@)
     set --
 
-    local action="${myarr[1]}"
+    local action="${pluglist[1]}"
     local plugin
-    for plugin in "${myarr[@]:1}"; do
+    for plugin in "${pluglist[@]:1}"; do
         unset ignorelevel filename plugin_dir_local_location postload_hook github_name install_hook where files fetchcommand
         declare -aU files
         # split strings by args
