@@ -15,7 +15,6 @@ declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
 
 export PLUGROOT="${ZDOTDIR}/plugins"
-has_defer=
 
 plug() {
     local args=($@)
@@ -27,7 +26,7 @@ plug() {
             __plug init ${__synchronous_plugins} ${__asynchronous_plugins}
         else
             __plug init ${__synchronous_plugins}
-            zsh-defer -12msz __plug init ${__asynchronous_plugins}
+            zsh-defer -12m __plug init ${__asynchronous_plugins}
         fi
         ;;
         (remove)
@@ -78,7 +77,7 @@ __plug() {
     local action="${pluglist[1]}"
     local plugin
     for plugin in "${pluglist[@]:1}"; do
-        unset ignorelevel filename plugin_dir_local_location postload_hook github_name install_hook where files fetchcommand
+        unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
         declare -aU files
         # split strings by args
         parts=("${(@s[, ])plugin}")
@@ -94,11 +93,11 @@ __plug() {
                 (ignorelevel)
                 local ignorelevel="${value}"
                 ;;
-                (install_hook)
-                local install_hook="${value}"
+                (postinstall)
+                local postinstall="${value}"
                 ;;
-                (postload_hook)
-                local postload_hook="${value}"
+                (postload)
+                local postload="${value}"
                 ;;
                 (env)
                 export "${(e)value}"
@@ -166,9 +165,9 @@ __plug() {
                     continue
                 fi
 
-                if [[ -n ${install_hook} ]]; then
+                if [[ -n ${postinstall} ]]; then
                     printf "\rRunning install hook for \x1B[35m\033[3m${(r:25:)github_name##*/}\033[0m … "
-                    eval "${install_hook}" 1> /dev/null &&\
+                    eval "${postinstall}" 1> /dev/null &&\
                     printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
                     printf "\r\x1B[31mFailed to run install hook for \x1B[35m\033[3m$github_name\033[0m\n"
                 fi
@@ -198,11 +197,11 @@ __plug() {
             done
         fi
 
-        if [[ -n "${postload_hook}" ]]; then
-            eval "${(e)postload_hook}"
+        if [[ -n "${postload}" ]]; then
+            eval "${(e)postload}"
         fi
     done
-    unset ignorelevel filename plugin_dir_local_location postload_hook github_name install_hook where files fetchcommand
+    unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
 }
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
