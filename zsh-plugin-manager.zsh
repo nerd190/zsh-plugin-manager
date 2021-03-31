@@ -15,17 +15,19 @@ declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
 
 export PLUGROOT="${ZDOTDIR}/plugins"
+has_defer=
 
 plug() {
     local args=($@)
     set --
     case "${args[1]}" in
         (init)
-        if [[ -n ${__asynchronous_plugins} ]]; then
-            __plug init ${__synchronous_plugins} romkatv/zsh-defer
-            zsh-defer -1 __plug init ${__asynchronous_plugins}
-        elif [[ -n ${__synchronous_plugins} ]]; then
+        __synchronous_plugins+=${__asynchronous_plugins:+romkatv/zsh-defer}
+        if [[ ! -d "${PLUGROOT}/romkatv/zsh-defer" ]]; then
+            __plug init ${__synchronous_plugins} ${__asynchronous_plugins}
+        else
             __plug init ${__synchronous_plugins}
+            zsh-defer __plug init ${__asynchronous_plugins}
         fi
         ;;
         (remove)
