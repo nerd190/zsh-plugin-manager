@@ -35,20 +35,23 @@ plug() {
         done
         ;;
         (update)
-        if [[ ${#args[@]} -gt 1 ]]; then
-            for plugin in "$args[@]"; do
-                echo $plugin
-                echo ${__synchronous_plugins}
-                if (( ${__synchronous_plugins[(r)plugin*]} )); then
-                    echo "it's in"
-                else
-                    echo "it's somewhere else maybe"
-                fi
-            done
-
-        else
-            __plug update trobjo/zsh-plugin-manager ${__synchronous_plugins} ${__asynchronous_plugins}
+        if [[ ${args[2]} == '--force' ]]; then
+            force=true
         fi
+        # elif [[ ${#args[@]} -gt 1 ]]; then
+        #     for plugin in "$args[@]"; do
+        #         echo $plugin
+        #         echo ${__synchronous_plugins}
+        #         if (( ${__synchronous_plugins[(r)plugin*]} )); then
+        #             echo "it's in"
+        #         else
+        #             echo "it's somewhere else maybe"
+        #         fi
+        #     done
+
+        # else
+        __plug update trobjo/zsh-plugin-manager ${__synchronous_plugins} ${__asynchronous_plugins}
+        # fi
         ;;
         (async)
         __asynchronous_plugins+="${args:6}"
@@ -70,15 +73,15 @@ compile_or_recompile() {
     fi
 }
 
-__plug() {
-    local pluglist=($@)
-    set --
+    __plug() {
+        local pluglist=($@)
+        set --
 
-    local action="${pluglist[1]}"
-    local plugin
-    for plugin in "${pluglist[@]:1}"; do
-        unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
-        declare -aU files
+        local action="${pluglist[1]}"
+        local plugin
+        for plugin in "${pluglist[@]:1}"; do
+            unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
+            declare -aU files
         # split strings by args
         parts=("${(@s[, ])plugin}")
         local github_name="${parts[1]}"
@@ -125,6 +128,9 @@ __plug() {
             printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
             if git -C ${plugin_dir_local_location} pull 2> /dev/null; then
                 printf "\033[0m"
+            elif [[ -n $force ]]; then
+                git -C ${plugin_dir_local_location} reset --hard HEAD
+                git -C ${plugin_dir_local_location} pull 2> /dev/null
             else
                 printf "\x1B[31mFailed to update\033[0m\n"
                 continue
@@ -199,7 +205,7 @@ __plug() {
             eval "${(e)postload}"
         fi
     done
-    unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
+    unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand force
 }
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
