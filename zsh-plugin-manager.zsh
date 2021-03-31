@@ -63,11 +63,11 @@ plug() {
 }
 
 compile_or_recompile() {
-        if [[ -f "${1}" ]] && [[ ! -f "${1}.zwc" ]] \
-            || [[ "${1}" -nt "${1}.zwc" ]]; then
-                zcompile "$1"
-            fi
-    }
+    if [[ -f "${1}" ]] && [[ ! -f "${1}.zwc" ]] \
+        || [[ "${1}" -nt "${1}.zwc" ]]; then
+            zcompile "$1"
+    fi
+}
 
 __plug() {
     local pluglist=($@)
