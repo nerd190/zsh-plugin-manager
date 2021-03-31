@@ -122,16 +122,13 @@ __plug() {
         fi
 
         if [[ $action == 'update' ]]; then
-
             printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
-
             if git -C ${plugin_dir_local_location} pull 2> /dev/null; then
                 printf "\033[0m"
             else
                 printf "\x1B[31mFailed to update\033[0m\n"
                 continue
             fi
-
         elif [[ $action == 'init' ]]; then
             if [[ ! -e "${plugin_dir_local_location}" ]]; then
                 printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
