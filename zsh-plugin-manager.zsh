@@ -166,9 +166,11 @@ __plug() {
                 fi
 
                 if [[ -n ${postinstall} ]]; then
-                    printf "\rRunning install hook for \x1B[35m\033[3m${(r:25:)github_name##*/}\033[0m … "
+                    maxlength=${${github_name##*/}:0:21}
+                    printf "\rPerforming \x1B[35m\033[3m${maxlength}\033[0m post-install hook "
+                    printf %$((21 - ${#maxlength}))s…
                     eval "${postinstall}" 1> /dev/null &&\
-                    printf "\x1B[32m\033[3mSucces\033[0m!\n" ||\
+                    printf " \x1B[32m\033[3mSucces\033[0m!\n" ||\
                     printf "\r\x1B[31mFailed to run install hook for \x1B[35m\033[3m$github_name\033[0m\n"
                 fi
             fi
