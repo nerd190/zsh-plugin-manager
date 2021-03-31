@@ -47,7 +47,7 @@ plug() {
             done
 
         else
-            __plug update ${__synchronous_plugins} ${__asynchronous_plugins}
+            __plug update trobjo/zsh-plugin-manager ${__synchronous_plugins} ${__asynchronous_plugins}
         fi
         ;;
         (async)
