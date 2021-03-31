@@ -123,8 +123,7 @@ __plug() {
 
         if [[ $action == 'update' ]]; then
 
-            printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} "
-            printf "\033[0m … \x1B[32m"
+            printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
 
             if git -C ${plugin_dir_local_location} pull 2> /dev/null; then
                 printf "\033[0m"
