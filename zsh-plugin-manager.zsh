@@ -26,7 +26,7 @@ plug() {
             __plug init ${__synchronous_plugins} ${__asynchronous_plugins}
         else
             __plug init ${__synchronous_plugins}
-            zsh-defer -12m __plug init ${__asynchronous_plugins}
+            zsh-defer -12ms __plug init ${__asynchronous_plugins}
         fi
         ;;
         (remove)
