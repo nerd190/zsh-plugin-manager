@@ -29,9 +29,9 @@ plug() {
         fi
         ;;
         (remove)
-            for plugin in "${args[@]:1}"; do
-                rm -rf $(readlink -f "$PLUGROOT/${plugin}") "$PLUGROOT/${plugin}"
-            done
+        for plugin in "${args[@]:1}"; do
+            rm -rf $(readlink -f "$PLUGROOT/${plugin}") "$PLUGROOT/${plugin}"
+        done
         ;;
         (update)
         if [[ ${#args[@]} -gt 1 ]]; then
