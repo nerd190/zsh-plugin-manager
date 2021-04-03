@@ -11,7 +11,6 @@
 # not found in $PATH.
 # The fourth field contains post-init hooks.
 
-
 declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
 
@@ -24,10 +23,10 @@ plug() {
         (init)
         __synchronous_plugins+=${__asynchronous_plugins:+romkatv/zsh-defer}
         if [[ ! -d "${PLUGROOT}/romkatv/zsh-defer" ]]; then
-            __plug init ${__synchronous_plugins} ${__asynchronous_plugins}
+            __plug_init ${__synchronous_plugins} ${__asynchronous_plugins}
         else
-            __plug init ${__synchronous_plugins}
-            [[ -n ${__asynchronous_plugins} ]] && zsh-defer -12ms __plug init ${__asynchronous_plugins}
+            __plug_init ${__synchronous_plugins}
+            [[ -n ${__asynchronous_plugins} ]] && zsh-defer -12ms __plug_init ${__asynchronous_plugins}
         fi
         ;;
         (remove)
@@ -39,20 +38,7 @@ plug() {
         if [[ ${args[2]} == '--force' ]]; then
             force=true
         fi
-        # elif [[ ${#args[@]} -gt 1 ]]; then
-        #     for plugin in "$args[@]"; do
-        #         echo $plugin
-        #         echo ${__synchronous_plugins}
-        #         if (( ${__synchronous_plugins[(r)plugin*]} )); then
-        #             echo "it's in"
-        #         else
-        #             echo "it's somewhere else maybe"
-        #         fi
-        #     done
-
-        # else
-        __plug update trobjo/zsh-plugin-manager ${__synchronous_plugins} ${__asynchronous_plugins}
-        # fi
+        __plug_update trobjo/zsh-plugin-manager ${__synchronous_plugins} ${__asynchronous_plugins}
         ;;
         (async)
         __asynchronous_plugins+="${args:6}"
@@ -74,15 +60,51 @@ compile_or_recompile() {
     fi
 }
 
-    __plug() {
-        local pluglist=($@)
-        set --
+__plug_update() {
+    local pluglist=($@)
+    set --
+    local plugin
+    for plugin in "${pluglist[@]}"; do
+        parts=("${(@s[, ])plugin}")
+        local github_name="${parts[1]}"
+        for part in "${parts[@]:1}"; do
+            key="${part%%:*}"
+            value="${part#*:}"
+            case "${key}" in
+                (if)
+                eval "${value}" > /dev/null 2>&1 || continue 2
+                ;;
+                (where)
+                local where="${(e)value}"
+                ;;
+                (*)
+                continue
+                ;;
+            esac
+        done
 
-        local action="${pluglist[1]}"
-        local plugin
-        for plugin in "${pluglist[@]:1}"; do
-            unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
-            declare -aU files
+        plugin_dir_local_location="${where:-${PLUGROOT}/$github_name}"
+
+        printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
+        if git -C ${plugin_dir_local_location} pull 2> /dev/null; then
+            continue
+        elif [[ -n $force ]]; then
+            git -C ${plugin_dir_local_location} reset --hard HEAD
+            git -C ${plugin_dir_local_location} pull 2> /dev/null
+        else
+            printf "\x1B[31mFailed to update\033[0m\n"
+            continue
+        fi
+    done
+    printf "Updated plugins. Please restart your shell\n"
+}
+
+__plug_init() {
+    local pluglist=($@)
+    set --
+    local plugin
+    for plugin in "${pluglist[@]}"; do
+        unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
         # split strings by args
         parts=("${(@s[, ])plugin}")
         local github_name="${parts[1]}"
@@ -119,67 +141,51 @@ compile_or_recompile() {
             esac
         done
 
-        if [ -z $where ]; then
-            plugin_dir_local_location="${PLUGROOT}/$github_name"
-        else
-            plugin_dir_local_location=${where}
-        fi
+        plugin_dir_local_location="${where:-${PLUGROOT}/$github_name}"
 
-        if [[ $action == 'update' ]]; then
-            printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
-            if git -C ${plugin_dir_local_location} pull 2> /dev/null; then
-                printf "\033[0m"
-            elif [[ -n $force ]]; then
-                git -C ${plugin_dir_local_location} reset --hard HEAD
-                git -C ${plugin_dir_local_location} pull 2> /dev/null
+        if [[ ! -e "${plugin_dir_local_location}" ]]; then
+            printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
+
+            prefix="${github_name:0:4}"
+            if [[ "$prefix" == 'http' ]]; then
+                filename=("${github_name##*/}")
+                fetchcommand='curl -L -O "$github_name"'
+            elif [[ "$prefix" == 'git@' ]]; then
+                fetchcommand='git clone --depth=1 "$github_name" ${plugin_dir_local_location}'
             else
-                printf "\x1B[31mFailed to update\033[0m\n"
+                # we assume github
+                fetchcommand='git clone --depth=1 "https://github.com/${github_name}.git" ${plugin_dir_local_location}'
+            fi
+
+            if eval "${fetchcommand}" 2> /dev/null; then
+                printf "\x1B[32m\033[3mSucces\033[0m!\n"
+                if [[ -n $where ]]; then
+                    if [[ $prefix == "http" ]]; then
+                        ln -s "${plugin_dir_local_location}" "${PLUGROOT}/${plugin_dir_local_location##*/}"
+                    else
+                        ln -s "${plugin_dir_local_location}" "${PLUGROOT}/$github_name"
+                    fi
+                fi
+            else
+                printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
+                printf "Backtrace:\n"
+                printf "plugin_dir_local_location: \x1B[32m${plugin_dir_local_location}\033[0m\n"
+                printf "github_name: \x1B[32m${github_name}\033[0m\n"
                 continue
             fi
-        elif [[ $action == 'init' ]]; then
-            if [[ ! -e "${plugin_dir_local_location}" ]]; then
-                printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
 
-                prefix="${github_name:0:4}"
-                if [[ "$prefix" == 'http' ]]; then
-                    filename=("${github_name##*/}")
-                    fetchcommand='curl -L -O "$github_name"'
-                elif [[ "$prefix" == 'git@' ]]; then
-                    fetchcommand='git clone --depth=1 "$github_name" ${plugin_dir_local_location}'
-                else
-                    # we assume github
-                    fetchcommand='git clone --depth=1 "https://github.com/${github_name}.git" ${plugin_dir_local_location}'
-                fi
-
-                if eval "${fetchcommand}" 2> /dev/null; then
-                    printf "\x1B[32m\033[3mSucces\033[0m!\n"
-                    if [[ -n $where ]]; then
-                        if [[ $prefix == "http" ]]; then
-                            ln -s "${plugin_dir_local_location}" "${PLUGROOT}/${plugin_dir_local_location##*/}"
-                        else
-                            ln -s "${plugin_dir_local_location}" "${PLUGROOT}/$github_name"
-                        fi
-                    fi
-                else
-                    printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
-                    printf "Backtrace:\n"
-                    printf "plugin_dir_local_location: \x1B[32m${plugin_dir_local_location}\033[0m\n"
-                    printf "github_name: \x1B[32m${github_name}\033[0m\n"
-                    continue
-                fi
-
-                if [[ -n ${postinstall} ]]; then
-                    maxlength=${${github_name##*/}:0:21}
-                    printf "\rPerforming \x1B[35m\033[3m${maxlength}\033[0m post-install hook "
-                    printf %$((21 - ${#maxlength}))s…
-                    eval "${postinstall}" 1> /dev/null &&\
-                    printf " \x1B[32m\033[3mSucces\033[0m!\n" ||\
-                    printf "\r\x1B[31mFailed to run install hook for \x1B[35m\033[3m$github_name\033[0m\n"
-                fi
+            if [[ -n ${postinstall} ]]; then
+                maxlength=${${github_name##*/}:0:21}
+                printf "\rPerforming \x1B[34m\033[3m${maxlength}\033[0m post-install hook "
+                printf %$((21 - ${#maxlength}))s…
+                eval "${postinstall}" 1> /dev/null &&\
+                printf " \x1B[32m\033[3mSucces\033[0m!\n" ||\
+                printf "\r\x1B[31mFailed to run install hook for \x1B[35m\033[3m$github_name\033[0m\n"
             fi
         fi
 
-        if [[ ! ${ignorelevel} == 'ignore' ]]; then
+        if [[ ${ignorelevel} != 'ignore' ]]; then
+            declare -aU files
             # we determine what filename to source.
             if [[ -n $filename ]]; then
                 for file in "$filename[@]"; do
