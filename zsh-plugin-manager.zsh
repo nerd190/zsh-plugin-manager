@@ -11,6 +11,7 @@
 # not found in $PATH.
 # The fourth field contains post-init hooks.
 
+
 declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
 
