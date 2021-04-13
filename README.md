@@ -77,16 +77,6 @@ plug romkatv/gitstatus
 plug trobjo/zsh-prompt-compact
 
 plug async trobjo/zsh-completions
-plug async skywind3000/z.lua,\
-           if:'command -v lua',\
-           env:'_ZL_CMD=h',\
-           env:'_ZL_DATA=${ZDOTDIR}/zlua_data',\
-           ignorelevel:ignore,\
-           postload:'$(lua ${plugin_dir_local_location}/z.lua --init zsh enhanced once); _zlua_precmd() {(czmod --add "\${PWD:a}" &) }'
-plug async 'https://raw.githubusercontent.com/trobjo/czmod-compiled/master/czmod',\
-           if:'! command -v czmod && command -v lua',\
-           ignorelevel:ignore,\
-           postinstall:'chmod +x "${filename}" && mv ${filename} ${HOME}/.local/bin/'
 plug async le0me55i/zsh-extract,\
            source:extract.plugin.zsh
 plug async 'https://github.com/junegunn/fzf/releases/download/0.26.0/fzf-0.26.0-linux_amd64.tar.gz',\
