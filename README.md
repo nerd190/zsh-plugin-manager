@@ -42,9 +42,10 @@ Asynchronous plugins make the plugins load in the background and therefore make 
 An asynchronous plugin is declared by adding the `async` keyword after `plug `. It uses [romkatv/zsh-defer](https://github.com/romkatv/zsh-defer) behind the scenes.
 
 ## Other options
-You can further qualify the installation of a plugin with the use of keywords.
-
-The syntax is `plug [async] <plugin-github-name>[, <qualifier-0>:'<value-0>', <qualifier-1>:'<value-1>', ...]`.
+You can further qualify the installation of a plugin with the use of keywords. The syntax is:
+```
+plug [async] <plugin-github-name>[, <qualifier-0>:'<value-0>', <qualifier-1>:'<value-1>', ...]
+```
 
 The value should, if it contains anything other than alphabetic characters, be quoted with single quotes.
 
