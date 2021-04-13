@@ -19,21 +19,22 @@ source "${ZDOTDIR}/plugins/trobjo/zsh-plugin-manager/zsh-plugin-manager.zsh"
 
 ```
 
-## Synchronous plugins and asynchronous plugins
-
+## Installing a plugin
 You install plugins by first declaring them. Declaring a plugin simply means adding it to a list that will be loaded later. 
-There are two lists and therefore two ways of loading plugins; synchronous and asynchronous. Synchronous plugins are always sourced in the order they are declared. 
-
 The syntax for declaring a plugin is as simple as:
 
 ```
 plug trobjo/zsh-completions
 ```
+After declaring 0 or more plugins you can initialize the plugin manager by calling `plug init` in your `.zshrc`. Plugins declared after `plug init` will not be loaded upon initialization of your shell.
+
+## Asynchronous plugins
+
+There are two ways of loading plugins; synchronously and asynchronously.
+
 Asynchronous plugins make the plugins load in the background and therefore make the prompt load way faster. That is especially useful on slow machines, but some plugins must be loaded on initialization, for example the prompt setup.
 
-An asynchronous plugin is declared by adding the `async` keyword to the command. It uses [romkatv/zsh-defer](https://github.com/romkatv/zsh-defer) behind the scenes.
-
-After declaring 0 or more plugins you can initialize the plugin manager by calling `plug init` in your `.zshrc`. Plugins declared after `plug init` will not be loaded upon initialization of your shell.
+An asynchronous plugin is declared by adding the `async` keyword after `plug `. It uses [romkatv/zsh-defer](https://github.com/romkatv/zsh-defer) behind the scenes.
 
 ## Other options
 You can further qualify the installation of a plugin with the use of keywords.
