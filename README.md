@@ -1,11 +1,10 @@
 # zsh-plugin-manager
 
-
 This is yet another plugin manager, because I did not find any that I was satisfied with.
 
-If a plugin is prefixed with `async` the plugin manager will load it asynchronously through the use of [romkatv/zsh-defer](https://github.com/romkatv/zsh-defer).
-
 Focus is on simplicity and speed. That means it is not as polished as [zplug/zplug](https://github.com/zplug/zplug) nor as customizable as [zdharma/zinit](https://github.com/zdharma/zinit).
+
+It supports asynchronous loading and automatically byte compiles your plugins.
 
 ## Installation
 
@@ -20,27 +19,21 @@ source "${ZDOTDIR}/plugins/trobjo/zsh-plugin-manager/zsh-plugin-manager.zsh"
 
 ```
 
-It is now ready for managing plugins.
-
 ## Synchronous plugins and asynchronous plugins
 
 You install plugins by first declaring them. Declaring a plugin simply means adding it to a list that will be loaded later. 
-There are two lists and therefore two ways of loading plugins; synchronous and asynchronous. Synchronous plugins are always sourced in the order they are declared. That is not guaranteed to be the case with asynchronous plugins.
+There are two lists and therefore two ways of loading plugins; synchronous and asynchronous. Synchronous plugins are always sourced in the order they are declared. 
 
-Asynchronous plugins make the plugins load in the background and therefore make the prompt load way faster. That is especially useful on slow machines, but some plugins must be loaded on initialization, for example the prompt setup.
-
-The syntax for declaring a synchronous plugin is as simple as:
+The syntax for declaring a plugin is as simple as:
 
 ```
 plug trobjo/zsh-completions
 ```
-Making a plugin load asynchronously works by adding `async` to the command. E.g:
-```
-plug async trobjo/zsh-goodies
-```
-After declaring 0 or more plugins you can initialize the plugin manager by calling `plug init` in your `.zshrc`. 
-Plugins declared after `plug init` will not be loaded upon initialization of your shell.
+Asynchronous plugins make the plugins load in the background and therefore make the prompt load way faster. That is especially useful on slow machines, but some plugins must be loaded on initialization, for example the prompt setup.
 
+An asynchronous plugin is declared by adding the `async` keyword to the command. It uses [romkatv/zsh-defer](https://github.com/romkatv/zsh-defer) behind the scenes.
+
+After declaring 0 or more plugins you can initialize the plugin manager by calling `plug init` in your `.zshrc`. Plugins declared after `plug init` will not be loaded upon initialization of your shell.
 
 ## Other options
 You can further qualify the installation of a plugin with the use of keywords.
@@ -98,8 +91,5 @@ plug async trobjo/Neovim-config,\
 
 plug init
 ```
-
-
-
 
 There are probably a lot of bugs, as I have not tested it with any other setups than mine.
