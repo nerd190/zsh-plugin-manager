@@ -2,15 +2,6 @@
 ## PLUGIN MANAGER
 #
 
-# plugin_manager documentation:
-# arguments can be passed to plugin_manager separated by ','.
-# The second field is the name of the file to source if it is
-# named differently than the plugin. The third field may contain
-# a command that must return exit code 0 for the plugin to load.
-# For example, you can avoid loading plugins if dependencies are
-# not found in $PATH.
-# The fourth field contains post-init hooks.
-
 declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
 
