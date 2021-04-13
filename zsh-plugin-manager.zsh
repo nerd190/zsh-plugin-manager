@@ -87,7 +87,7 @@ __plug_update() {
             continue
         fi
     done
-    printf "Updated plugins. Please restart your shell\n"
+    printf "\x1B[32mIf plugins were updated, you should restart your shell\033[0m\n"
 }
 
 __plug_init() {
