@@ -49,6 +49,8 @@ plug [async] <plugin-github-name>[, <qualifier-0>:'<value-0>', <qualifier-1>:'<v
 
 The value should, if it contains anything other than alphabetic characters, be quoted with single quotes.
 
+The separator value is `, ` – a comma with at least one space.
+
 | Qualifier | Description |
 |:-:|-|
 |`if` |The expression will be evaluated by your shell and must return an exit code of 0 in order for the plugin to be installed and/or loaded.|
