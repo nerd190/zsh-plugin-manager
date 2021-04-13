@@ -26,7 +26,7 @@ The syntax for declaring a plugin is as simple as:
 ```
 plug trobjo/zsh-completions
 ```
-After declaring 0 or more plugins you can initialize the plugin manager by calling `plug init` in your `.zshrc`. Plugins declared after `plug init` will not be loaded upon initialization of your shell.
+After declaring 0 or more plugins you can initialize the plugin manager by calling `plug init`. Plugins declared after `plug init` will not be loaded upon initialization of your shell.
 
 ## Asynchronous plugins
 
