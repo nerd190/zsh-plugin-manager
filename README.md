@@ -26,6 +26,11 @@ The syntax for declaring a plugin is as simple as:
 ```
 plug trobjo/zsh-completions
 ```
+The plugin name can be either:
+1. github-author/repo
+2. http-address. Will not be cloned with git but curl'ed. Does not support updating later.
+3. other git repo. Must be prefixed with git@
+
 After declaring 0 or more plugins you can initialize the plugin manager by calling `plug init`. Plugins declared after `plug init` will not be loaded upon initialization of your shell.
 
 ## Asynchronous plugins
