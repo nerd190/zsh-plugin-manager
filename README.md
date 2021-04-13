@@ -2,7 +2,7 @@
 
 This is yet another plugin manager, because I did not find any that I was satisfied with.
 
-Focus is on simplicity and speed. That means it is not as polished as [zplug/zplug](https://github.com/zplug/zplug) nor as customizable as [zdharma/zinit](https://github.com/zdharma/zinit).
+Focus is on speed and simplicity. That means it is not as polished as [zplug/zplug](https://github.com/zplug/zplug) nor as customizable as [zdharma/zinit](https://github.com/zdharma/zinit).
 
 It supports asynchronous loading and automatically byte compiles your plugins.
 
