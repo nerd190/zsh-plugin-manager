@@ -10,7 +10,7 @@ It supports asynchronous loading and automatically byte compiles your plugins.
 
 It works by first sourcing the plugin manager. If you do not have it installed, you can put this snippet in your .zshrc to automatically install it:
 
-```
+```zsh
 if [[ ! -d ${ZDOTDIR}/plugins ]]; then
     git clone --depth=1 https://github.com/trobjo/zsh-plugin-manager 2> /dev/null "${ZDOTDIR}/plugins/trobjo/zsh-plugin-manager"
     command chmod g-rwX "${ZDOTDIR}/plugins"
@@ -23,7 +23,7 @@ source "${ZDOTDIR}/plugins/trobjo/zsh-plugin-manager/zsh-plugin-manager.zsh"
 You install plugins by first declaring them. Declaring a plugin simply means adding it to a list that will be loaded later. 
 The syntax for declaring a plugin is as simple as:
 
-```
+```zsh
 plug trobjo/zsh-completions
 ```
 The plugin name can be either:
@@ -43,7 +43,7 @@ An asynchronous plugin is declared by adding the `async` keyword after `plug `. 
 
 ## Other options
 You can further qualify the installation of a plugin with the use of keywords. The syntax is:
-```
+```zsh
 plug [async] <plugin-github-name>[, <qualifier-0>:'<value-0>', <qualifier-1>:'<value-1>', ...]
 ```
 
@@ -64,7 +64,7 @@ The separator value is `, ` – a comma with at least one space.
 ## Example
 Here is a short, working example:
 
-```
+```zsh
 if [[ ! -d ${ZDOTDIR}/plugins ]]; then
     git clone --depth=1 https://github.com/trobjo/zsh-plugin-manager 2> /dev/null "${ZDOTDIR}/plugins/trobjo/zsh-plugin-manager"
     command chmod g-rwX "${ZDOTDIR}/plugins"
