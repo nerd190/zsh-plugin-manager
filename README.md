@@ -51,15 +51,15 @@ The value should, if it contains anything other than alphabetic characters, be q
 
 The separator value is `, ` – a comma with at least one space.
 
-| Qualifier | Description |
-|:-:|-|
-|`if` |The expression will be evaluated by your shell and must return an exit code of 0 in order for the plugin to be installed and/or loaded.|
-|`ignorelevel`|If you do not want to automatically source the plugin file, for example because it is a binary, you can set the `ignorelevel`.|
-|`postinstall`|A shell expression that is run once after the installation.|
-|`source`|File to source if the plugin is named differently than `github/name.plugin.zsh` or `github/name.zsh`|
-|`postload`|Hook to run on every start after the plugin itself is sourced|
-|`env`|Simple environment variables to export. Global|
-|`where`|Alternative plugin location.|
+| Qualifier | Can be used multiple times? | Description |
+|:-:|:-:|-|
+|`if` |Yees|The expression will be evaluated by your shell and must return an exit code of 0 in order for the plugin to be installed and/or loaded.|
+|`env`|Yes|Simple environment variables to export. Global|
+|`ignorelevel`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set the `ignorelevel`.|
+|`postinstall`|No|A shell expression that is run once after the installation.|
+|`source`|Yes|File to source if the plugin is named differently than `github/name.plugin.zsh` or `github/name.zsh`|
+|`postload`|No|Hook to run on every start after the plugin itself is sourced|
+|`where`|No|Alternative plugin location.|
 
 ## Example
 Here is a short, working example:
