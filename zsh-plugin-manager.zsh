@@ -177,26 +177,24 @@ __plug_init() {
 
         if [[ ${ignorelevel} != 'ignore' ]]; then
             declare -aU files
+
             # we determine what filename to source.
-            if [[ -n $filename ]]; then
-                for file in "$filename[@]"; do
-                    files+=("${plugin_dir_local_location}/${file}")
-                done
-            else
-                files=("${plugin_dir_local_location}/${${github_name##*/}//.zsh/}.zsh")
-                if [[ ! -f "${files[1]}" ]]; then
-                    files=("${plugin_dir_local_location}/${github_name##*/}.plugin.zsh")
-                fi
+            filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
+
+            if [[ ! -f "${filename}" ]]; then
+                filename="${plugindir}/${github_name##*/}.plugin.zsh"
             fi
 
-            for file in "$files[@]"; do
-                if [ ! -f "${file}" ]; then
-                    printf "No file with the name \"${file}\"\n"
-                else
-                    compile_or_recompile "${file}"
-                    source "$file"
-                fi
-            done
+            if [[ ! -f "${filename}" ]]; then
+                filename="${plugindir}/${${github_name##*/}//zsh-/}.plugin.zsh"
+            fi
+
+            if [ ! -f "${filename}" ]; then
+                printf "No filename with the name \"${filename}\"\n"
+            else
+                compile_or_recompile "${filename}"
+                source "$filename"
+            fi
         fi
 
         if [[ -n "${postload}" ]]; then
