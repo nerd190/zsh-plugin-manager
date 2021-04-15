@@ -55,9 +55,8 @@ The separator value is `, ` – a comma with at least one space.
 |:-:|:-:|-|
 |`if` |Yes|The expression will be evaluated by your shell and must return an exit code of 0 in order for the plugin to be installed and/or loaded.|
 |`env`|Yes|Simple environment variables to export. Global|
-|`ignorelevel`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set the `ignorelevel`.|
+|`ignore`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set `ignore=true`.|
 |`postinstall`|No|A shell expression that is run once after the installation.|
-|`source`|Yes|File to source if the plugin is named differently than `github/name.plugin.zsh` or `github/name.zsh`|
 |`postload`|No|Hook to run on every start after the plugin itself is sourced|
 |`where`|No|Alternative plugin location.|
 
@@ -81,13 +80,13 @@ plug async le0me55i/zsh-extract,\
            source:extract.plugin.zsh
 plug async 'https://github.com/junegunn/fzf/releases/download/0.26.0/fzf-0.26.0-linux_amd64.tar.gz',\
            if:'! command -v fzf',\
-           ignorelevel:ignore,\
+           ignore:true,\
            postinstall:'tar zxvf ${filename} --directory ${HOME}/.local/bin/ && rm ${filename}'
 plug async trobjo/Neovim-config,\
            if:'command -v nvim',\
            where:'$XDG_CONFIG_HOME/nvim',\
            postinstall:'nvim +PlugInstall +qall; printf "\e[6 q\n\n"',\
-           ignorelevel:ignore
+           ignore:true
 
 plug init
 ```
