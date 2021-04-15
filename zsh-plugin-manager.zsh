@@ -138,6 +138,7 @@ __plug_init() {
 
             prefix="${github_name:0:4}"
             if [[ "$prefix" == 'http' ]]; then
+                filename=("${github_name##*/}")
                 fetchcommand='curl -L -O "$github_name"'
             elif [[ "$prefix" == 'git@' ]]; then
                 fetchcommand='git clone --depth=1 "$github_name" ${plugindir}'
