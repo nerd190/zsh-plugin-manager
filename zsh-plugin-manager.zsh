@@ -30,6 +30,7 @@ plug() {
             force=true
         fi
         __plug_update trobjo/zsh-plugin-manager ${__synchronous_plugins} ${__asynchronous_plugins}
+        unset force
         ;;
         (async)
         __asynchronous_plugins+="${args:6}"
@@ -74,14 +75,14 @@ __plug_update() {
             esac
         done
 
-        plugin_dir_local_location="${where:-${PLUGROOT}/$github_name}"
+        plugindir="${where:-${PLUGROOT}/$github_name}"
 
         printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
-        if git -C ${plugin_dir_local_location} pull 2> /dev/null; then
+        if git -C ${plugindir} pull 2> /dev/null; then
             continue
         elif [[ -n $force ]]; then
-            git -C ${plugin_dir_local_location} reset --hard HEAD
-            git -C ${plugin_dir_local_location} pull 2> /dev/null
+            git -C ${plugindir} reset --hard HEAD
+            git -C ${plugindir} pull 2> /dev/null
         else
             printf "\x1B[31mFailed to update\033[0m\n"
             continue
@@ -95,7 +96,7 @@ __plug_init() {
     set --
     local plugin
     for plugin in "${pluglist[@]}"; do
-        unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand
+        unset ignore filename plugindir postload github_name postinstall where fetchcommand
         # split strings by args
         parts=("${(@s[, ])plugin}")
         local github_name="${parts[1]}"
@@ -107,8 +108,9 @@ __plug_init() {
                 (if)
                 eval "${value}" > /dev/null 2>&1 || continue 2
                 ;;
-                (ignorelevel)
-                local ignorelevel="${value}"
+                (ignore)
+                [[ "${${value}:l}" == "true" ]] && ignore=true
+                [[ "${value}" -eq 1 ]] && ignore=true
                 ;;
                 (postinstall)
                 local postinstall="${value}"
@@ -122,9 +124,6 @@ __plug_init() {
                 (where)
                 local where="${(e)value}"
                 ;;
-                (source)
-                filename+=("${(e)value}")
-                ;;
                 (*)
                 printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
                 continue 2
@@ -132,35 +131,34 @@ __plug_init() {
             esac
         done
 
-        plugin_dir_local_location="${where:-${PLUGROOT}/$github_name}"
+        plugindir="${where:-${PLUGROOT}/$github_name}"
 
-        if [[ ! -e "${plugin_dir_local_location}" ]]; then
+        if [[ ! -e "${plugindir}" ]]; then
             printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
 
             prefix="${github_name:0:4}"
             if [[ "$prefix" == 'http' ]]; then
-                filename=("${github_name##*/}")
                 fetchcommand='curl -L -O "$github_name"'
             elif [[ "$prefix" == 'git@' ]]; then
-                fetchcommand='git clone --depth=1 "$github_name" ${plugin_dir_local_location}'
+                fetchcommand='git clone --depth=1 "$github_name" ${plugindir}'
             else
                 # we assume github
-                fetchcommand='git clone --depth=1 "https://github.com/${github_name}.git" ${plugin_dir_local_location}'
+                fetchcommand='git clone --depth=1 "https://github.com/${github_name}.git" ${plugindir}'
             fi
 
             if eval "${fetchcommand}" 2> /dev/null; then
                 printf "\x1B[32m\033[3mSucces\033[0m!\n"
                 if [[ -n $where ]]; then
                     if [[ $prefix == "http" ]]; then
-                        ln -s "${plugin_dir_local_location}" "${PLUGROOT}/${plugin_dir_local_location##*/}"
+                        ln -s "${plugindir}" "${PLUGROOT}/${plugindir##*/}"
                     else
-                        ln -s "${plugin_dir_local_location}" "${PLUGROOT}/$github_name"
+                        ln -s "${plugindir}" "${PLUGROOT}/$github_name"
                     fi
                 fi
             else
                 printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
                 printf "Backtrace:\n"
-                printf "plugin_dir_local_location: \x1B[32m${plugin_dir_local_location}\033[0m\n"
+                printf "plugindir: \x1B[32m${plugindir}\033[0m\n"
                 printf "github_name: \x1B[32m${github_name}\033[0m\n"
                 continue
             fi
@@ -175,8 +173,7 @@ __plug_init() {
             fi
         fi
 
-        if [[ ${ignorelevel} != 'ignore' ]]; then
-            declare -aU files
+        if [[ -z ${ignore} ]]; then
 
             # we determine what filename to source.
             filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
@@ -201,7 +198,7 @@ __plug_init() {
             eval "${(e)postload}"
         fi
     done
-    unset ignorelevel filename plugin_dir_local_location postload github_name postinstall where files fetchcommand force
+    unset ignore filename plugindir postload github_name postinstall where  fetchcommand
 }
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
