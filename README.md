@@ -76,8 +76,6 @@ plug romkatv/gitstatus
 plug trobjo/zsh-prompt-compact
 
 plug async trobjo/zsh-completions
-plug async le0me55i/zsh-extract,\
-           source:extract.plugin.zsh
 plug async 'https://github.com/junegunn/fzf/releases/download/0.26.0/fzf-0.26.0-linux_amd64.tar.gz',\
            if:'! command -v fzf',\
            ignore:true,\
