@@ -109,8 +109,9 @@ __plug_init() {
                 eval "${value}" > /dev/null 2>&1 || continue 2
                 ;;
                 (ignore)
-                [[ "${${value}:l}" == "true" ]] && ignore=true
-                [[ "${value}" -eq 1 ]] && ignore=true
+                if [[ "${${value}:l}" == "true" ]] || [[ "${value}" -eq 1 ]]; then
+                    ignore=true
+                fi
                 ;;
                 (postinstall)
                 local postinstall="${value}"
