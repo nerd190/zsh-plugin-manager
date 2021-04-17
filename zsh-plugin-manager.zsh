@@ -49,57 +49,57 @@ compile_or_recompile() {
     if [[ -f "${1}" ]] && [[ ! -f "${1}.zwc" ]] \
         || [[ "${1}" -nt "${1}.zwc" ]]; then
             zcompile "$1"
-    fi
-}
-
-__plug_update() {
-    local pluglist=($@)
-    set --
-    local plugin
-    for plugin in "${pluglist[@]}"; do
-        parts=("${(@s[, ])plugin}")
-        local github_name="${parts[1]}"
-        for part in "${parts[@]:1}"; do
-            key="${part%%:*}"
-            value="${part#*:}"
-            case "${key}" in
-                (if)
-                eval "${value}" > /dev/null 2>&1 || continue 2
-                ;;
-                (where)
-                local where="${(e)value}"
-                ;;
-                (*)
-                continue
-                ;;
-            esac
-        done
-
-        plugindir="${where:-${PLUGROOT}/$github_name}"
-
-        printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
-        if git -C ${plugindir} pull 2> /dev/null; then
-            continue
-        elif [[ -n $force ]]; then
-            git -C ${plugindir} reset --hard HEAD
-            git -C ${plugindir} pull 2> /dev/null
-        else
-            printf "\x1B[31mFailed to update\033[0m\n"
-            continue
         fi
-    done
-    printf "\x1B[32mIf plugins were updated, you should restart your shell\033[0m\n"
-}
+    }
 
-__plug_init() {
-    local pluglist=($@)
-    set --
-    local plugin
-    for plugin in "${pluglist[@]}"; do
-        unset ignore filename plugindir postload github_name postinstall where fetchcommand
+    __plug_update() {
+        local pluglist=($@)
+        set --
+        local plugin
+        for plugin in "${pluglist[@]}"; do
+            parts=("${(@s[, ])plugin}")
+            local github_name="${parts[1]}"
+            for part in "${parts[@]:1}"; do
+                key="${part%%:*}"
+                value="${part#*:}"
+                case "${key}" in
+                    (if)
+                    eval "${value}" > /dev/null 2>&1 || continue 2
+                    ;;
+                    (where)
+                    local where="${(e)value}"
+                    ;;
+                    (*)
+                    continue 2
+                    ;;
+                esac
+            done
+
+            plugindir="${where:-${PLUGROOT}/$github_name}"
+
+            printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
+            if git -C ${plugindir} pull 2> /dev/null; then
+                continue
+            elif [[ -n $force ]]; then
+                git -C ${plugindir} reset --hard HEAD
+                git -C ${plugindir} pull 2> /dev/null
+            else
+                printf "\x1B[31mFailed to update\033[0m\n"
+                continue
+            fi
+        done
+        printf "\x1B[32mIf plugins were updated, you should restart your shell\033[0m\n"
+    }
+
+    __plug_init() {
+        local pluglist=($@)
+        set --
+        local plugin
+        for plugin in "${pluglist[@]}"; do
+            unset nosource github_name filename plugindir postload postinstall where fetchcommand
         # split strings by args
         parts=("${(@s[, ])plugin}")
-        local github_name="${parts[1]}"
+        github_name="${parts[1]}"
 
         for part in "${parts[@]:1}"; do
             key="${part%%:*}"
@@ -108,22 +108,22 @@ __plug_init() {
                 (if)
                 eval "${value}" > /dev/null 2>&1 || continue 2
                 ;;
-                (ignore)
+                (nosource)
                 if [[ "${${value}:l}" == "true" ]] || [[ "${value}" -eq 1 ]]; then
-                    ignore=true
+                    nosource=true
                 fi
                 ;;
                 (postinstall)
-                local postinstall="${value}"
+                postinstall="${value}"
                 ;;
                 (postload)
-                local postload="${value}"
+                postload="${postload:+$postload; }${value}"
                 ;;
                 (env)
-                export "${(e)value}"
+                postload="${postload:+$postload; }export ${(e)value}"
                 ;;
                 (where)
-                local where="${(e)value}"
+                where="${(e)value}"
                 ;;
                 (*)
                 printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
@@ -175,32 +175,28 @@ __plug_init() {
             fi
         fi
 
-        if [[ -z ${ignore} ]]; then
-
-            # we determine what filename to source.
+        if [[ -z ${nosource} ]]; then
+            # Determine what filename to source.
             filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
-
             if [[ ! -f "${filename}" ]]; then
                 filename="${plugindir}/${github_name##*/}.plugin.zsh"
+                if [[ ! -f "${filename}" ]]; then
+                    filename="${plugindir}/${${github_name##*/}//zsh-/}.plugin.zsh"
+                    if [ ! -f "${filename}" ]; then
+                        printf "No filename with the name \"${filename}\"\n"
+                        continue
+                    fi
+                fi
             fi
-
-            if [[ ! -f "${filename}" ]]; then
-                filename="${plugindir}/${${github_name##*/}//zsh-/}.plugin.zsh"
-            fi
-
-            if [ ! -f "${filename}" ]; then
-                printf "No filename with the name \"${filename}\"\n"
-            else
-                compile_or_recompile "${filename}"
-                source "$filename"
-            fi
+            compile_or_recompile "${filename}"
+            source "$filename"
         fi
 
         if [[ -n "${postload}" ]]; then
             eval "${(e)postload}"
         fi
     done
-    unset ignore filename plugindir postload github_name postinstall where  fetchcommand
+    unset nosource github_name filename plugindir postload postinstall where fetchcommand
 }
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
