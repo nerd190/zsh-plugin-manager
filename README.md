@@ -54,10 +54,10 @@ The separator value is `, ` – a comma with at least one space.
 | Qualifier | Can be used multiple times? | Description |
 |:-:|:-:|-|
 |`if` |Yes|The expression will be evaluated by your shell and must return an exit code of 0 in order for the plugin to be installed and/or loaded.|
-|`env`|Yes|Simple environment variables to export. Global|
-|`ignore`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set `ignore=true`.|
-|`postinstall`|No|A shell expression that is run once after the installation.|
-|`postload`|No|Hook to run on every start after the plugin itself is sourced|
+|`env`|Yes|Simple environment variables to export. Exported after sourcing of the plugin and only if plugin loading is without errors|
+|`postinstall`|Yes|A shell expression that is run once after the installation.|
+|`postload`|Yes|Hook to run on every start after the plugin itself is sourced|
+|`nosource`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set `ignore=true`.|
 |`where`|No|Alternative plugin location.|
 
 ## Example
