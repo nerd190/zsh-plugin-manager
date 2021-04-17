@@ -57,7 +57,7 @@ The separator value is `, ` – a comma with at least one space.
 |`env`|Yes|Simple environment variables to export. Exported after sourcing of the plugin and only if plugin loading is without errors|
 |`postinstall`|Yes|A shell expression that is run once after the installation.|
 |`postload`|Yes|Hook to run on every start after the plugin itself is sourced|
-|`nosource`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set `ignore=true`.|
+|`nosource`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set `nosource=true`.|
 |`where`|No|Alternative plugin location.|
 
 ## Example
@@ -78,13 +78,13 @@ plug trobjo/zsh-prompt-compact
 plug async trobjo/zsh-completions
 plug async 'https://github.com/junegunn/fzf/releases/download/0.26.0/fzf-0.26.0-linux_amd64.tar.gz',\
            if:'! command -v fzf',\
-           ignore:true,\
+           nosource:true,\
            postinstall:'tar zxvf ${filename} --directory ${HOME}/.local/bin/ && rm ${filename}'
 plug async trobjo/Neovim-config,\
            if:'command -v nvim',\
            where:'$XDG_CONFIG_HOME/nvim',\
            postinstall:'nvim +PlugInstall +qall; printf "\e[6 q\n\n"',\
-           ignore:true
+           nosource:true
 
 plug init
 ```
