@@ -1,7 +1,3 @@
-#
-## PLUGIN MANAGER
-#
-
 declare -aU __synchronous_plugins
 declare -aU __asynchronous_plugins
 
@@ -50,7 +46,7 @@ compile_or_recompile() {
         || [[ "${1}" -nt "${1}.zwc" ]]; then
             zcompile "$1"
         fi
-    }
+}
 
     __plug_update() {
         local pluglist=($@)
@@ -176,7 +172,6 @@ compile_or_recompile() {
         fi
 
         if [[ -z ${nosource} ]]; then
-            # Determine what filename to source.
             filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
             if [[ ! -f "${filename}" ]]; then
                 filename="${plugindir}/${github_name##*/}.plugin.zsh"
