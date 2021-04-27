@@ -4,6 +4,7 @@ declare -aU __asynchronous_plugins
 export PLUGROOT="${ZDOTDIR}/plugins"
 
 plug() {
+    printf "\x1b[?25l"            # hide the cursor while we update
     local args=($@)
     set --
     case "${args[1]}" in
@@ -39,6 +40,7 @@ plug() {
         __synchronous_plugins+="${args}"
         ;;
     esac
+    printf "\x1b[?25h"            # hide the cursor while we update
 }
 
 compile_or_recompile() {
