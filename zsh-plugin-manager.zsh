@@ -55,6 +55,7 @@ compile_or_recompile() {
         set --
         local plugin
         for plugin in "${pluglist[@]}"; do
+            unset where plugindir github_name
             parts=("${(@s[, ])plugin}")
             local github_name="${parts[1]}"
             for part in "${parts[@]:1}"; do
@@ -83,7 +84,7 @@ compile_or_recompile() {
                 git -C ${plugindir} pull 2> /dev/null
             else
                 printf "\x1B[31mFailed to update\033[0m\n"
-                continue
+                continue 1
             fi
         done
         printf "\x1B[32mIf plugins were updated, you should restart your shell\033[0m\n"
