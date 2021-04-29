@@ -10,12 +10,8 @@ plug() {
     case "${args[1]}" in
         (init)
         __synchronous_plugins+=${__asynchronous_plugins:+romkatv/zsh-defer}
-        if [[ ! -d "${PLUGROOT}/romkatv/zsh-defer" ]]; then
-            __plug_init ${__synchronous_plugins} ${__asynchronous_plugins}
-        else
-            __plug_init ${__synchronous_plugins}
-            [[ -n ${__asynchronous_plugins} ]] && zsh-defer -12ms __plug_init ${__asynchronous_plugins}
-        fi
+        __plug_init __synchronous_plugins
+        [[ -n ${__asynchronous_plugins} ]] && __plug_init __asynchronous_plugins
         ;;
         (remove)
         for plugin in "${args[@]:1}"; do
@@ -40,7 +36,7 @@ plug() {
         __synchronous_plugins+="${args}"
         ;;
     esac
-    printf "\x1b[?25h"            # hide the cursor while we update
+    printf "\x1b[?25h"            # show the cursor again
 }
 
 compile_or_recompile() {
@@ -91,10 +87,12 @@ compile_or_recompile() {
     }
 
     __plug_init() {
-        local pluglist=($@)
+        [[ $1 == __asynchronous_plugins ]] && source_cmd=("zsh-defer")
+        source_cmd+="source"
+        local input=${1}
         set --
         local plugin
-        for plugin in "${pluglist[@]}"; do
+        for plugin in ${${(P)input}}; do
             unset nosource github_name filename plugindir postload postinstall where fetchcommand
         # split strings by args
         parts=("${(@s[, ])plugin}")
@@ -187,7 +185,7 @@ compile_or_recompile() {
                 fi
             fi
             compile_or_recompile "${filename}"
-            source "$filename"
+            ${source_cmd} "$filename"
         fi
 
         if [[ -n "${postload}" ]]; then
