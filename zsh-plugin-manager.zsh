@@ -93,7 +93,7 @@ compile_or_recompile() {
         set --
         local plugin
         for plugin in ${${(P)input}}; do
-            unset nosource github_name filename plugindir postload postinstall where fetchcommand
+            unset nosource github_name filename plugindir preload postload postinstall where fetchcommand
             # split strings by args
             parts=("${(@s[, ])plugin}")
             github_name="${parts[1]}"
@@ -113,11 +113,11 @@ compile_or_recompile() {
                     (postinstall)
                     postinstall="${postinstall:+$postinstall; }${value}"
                     ;;
+                    (preload)
+                    preload="${preload:+$preload; }${value}"
+                    ;;
                     (postload)
                     postload="${postload:+$postload; }${value}"
-                    ;;
-                    (env)
-                    postload="${postload:+$postload; }export ${(e)value}"
                     ;;
                     (where)
                     where="${(e)value}"
@@ -172,15 +172,19 @@ compile_or_recompile() {
                 fi
             fi
 
+            if [[ -n "${preload}" ]]; then
+                eval "${(e)preload}"
+            fi
+
             if [[ -z ${nosource} ]]; then
-            filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
+                filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
                 if [[ ! -f "${filename}" ]]; then
                     filename="${plugindir}/${github_name##*/}.plugin.zsh"
                     if [[ ! -f "${filename}" ]]; then
                         filename="${plugindir}/${${github_name##*/}//zsh-/}.plugin.zsh"
                         if [ ! -f "${filename}" ]; then
-                        printf "No filename with the name \"${filename}\"\n"
-                        continue
+                            printf "No filename with the name \"${filename}\"\n"
+                            continue
                         fi
                     fi
                 fi
@@ -189,10 +193,10 @@ compile_or_recompile() {
             fi
 
             if [[ -n "${postload}" ]]; then
-            eval "${(e)postload}"
-        fi
+                eval "${(e)postload}"
+            fi
     done
-    unset nosource github_name filename plugindir postload postinstall where fetchcommand
+    unset nosource github_name filename plugindir preload postload postinstall where fetchcommand
 }
 
 compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
