@@ -65,7 +65,6 @@ compile_or_recompile() {
                 local where="${(e)value}"
                 ;;
                 (*)
-                continue 2
                 ;;
                 esac
             done
