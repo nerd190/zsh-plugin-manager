@@ -51,22 +51,22 @@ compile_or_recompile() {
         set --
         local plugin
         for plugin in "${pluglist[@]}"; do
-            unset where plugindir github_name
-            parts=("${(@s[, ])plugin}")
-            local github_name="${parts[1]}"
-            for part in "${parts[@]:1}"; do
-                key="${part%%:*}"
-                value="${part#*:}"
-                case "${key}" in
-                    (if)
-                    eval "${value}" > /dev/null 2>&1 || continue 2
-                    ;;
-                    (where)
-                    local where="${(e)value}"
-                    ;;
-                    (*)
-                    continue 2
-                    ;;
+        unset where plugindir github_name
+        parts=("${(@s[, ])plugin}")
+        local github_name="${parts[1]}"
+        for part in "${parts[@]:1}"; do
+            key="${part%%:*}"
+            value="${part#*:}"
+            case "${key}" in
+                (if)
+                eval "${value}" > /dev/null 2>&1 || continue 2
+                ;;
+                (where)
+                local where="${(e)value}"
+                ;;
+                (*)
+                continue 2
+                ;;
                 esac
             done
 
@@ -147,11 +147,11 @@ compile_or_recompile() {
 
                 if eval "${fetchcommand}" 2> /dev/null; then
                     printf "\x1B[32m\033[3mSucces\033[0m!\n"
-                    if [[ -n $where ]]; then
-                        if [[ $prefix == "http" ]]; then
-                            ln -s "${plugindir}" "${PLUGROOT}/${plugindir##*/}"
-                        else
-                            ln -s "${plugindir}" "${PLUGROOT}/$github_name"
+                if [[ -n $where ]]; then
+                    if [[ $prefix == "http" ]]; then
+                        ln -s "${plugindir}" "${PLUGROOT}/${plugindir##*/}"
+                    else
+                        ln -s "${plugindir}" "${PLUGROOT}/$github_name"
                         fi
                     fi
                 else
@@ -163,24 +163,24 @@ compile_or_recompile() {
                 fi
 
                 if [[ -n ${postinstall} ]]; then
-                    maxlength=${${github_name##*/}:0:21}
-                    printf "\rPerforming \x1B[34m\033[3m${maxlength}\033[0m post-install hook "
-                    printf %$((21 - ${#maxlength}))s…
-                    eval "${(e)postinstall}" 1> /dev/null &&\
-                    printf " \x1B[32m\033[3mSucces\033[0m!\n" ||\
-                    printf "\r\x1B[31mFailed to run postinstall hook for \x1B[35m\033[3m$github_name\033[0m\n"
+                maxlength=${${github_name##*/}:0:21}
+                printf "\rPerforming \x1B[34m\033[3m${maxlength}\033[0m post-install hook "
+                printf %$((21 - ${#maxlength}))s…
+                eval "${(e)postinstall}" 1> /dev/null &&\
+                printf " \x1B[32m\033[3mSucces\033[0m!\n" ||\
+                printf "\r\x1B[31mFailed to run postinstall hook for \x1B[35m\033[3m$github_name\033[0m\n"
                 fi
             fi
 
             if [[ -z ${nosource} ]]; then
-                filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
+            filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
                 if [[ ! -f "${filename}" ]]; then
                     filename="${plugindir}/${github_name##*/}.plugin.zsh"
                     if [[ ! -f "${filename}" ]]; then
                         filename="${plugindir}/${${github_name##*/}//zsh-/}.plugin.zsh"
                         if [ ! -f "${filename}" ]; then
-                            printf "No filename with the name \"${filename}\"\n"
-                            continue
+                        printf "No filename with the name \"${filename}\"\n"
+                        continue
                         fi
                     fi
                 fi
@@ -189,12 +189,12 @@ compile_or_recompile() {
             fi
 
             if [[ -n "${postload}" ]]; then
-                eval "${(e)postload}"
-            fi
-        done
-        unset nosource github_name filename plugindir postload postinstall where fetchcommand
-    }
+            eval "${(e)postload}"
+        fi
+    done
+    unset nosource github_name filename plugindir postload postinstall where fetchcommand
+}
 
-    compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
-    compile_or_recompile "${ZDOTDIR:-$HOME}/.zcompdump"
-    compile_or_recompile "$0"
+compile_or_recompile "${ZDOTDIR:-$HOME}/.zshrc"
+compile_or_recompile "${ZDOTDIR:-$HOME}/.zcompdump"
+compile_or_recompile "$0"
