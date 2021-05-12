@@ -37,7 +37,7 @@ After declaring 0 or more plugins you can initialize the plugin manager by calli
 
 There are two ways of loading plugins; synchronously and asynchronously.
 
-Asynchronous plugins make the plugins load in the background and therefore make the prompt load way faster. That is especially useful on slow machines, but some plugins must be loaded on initialization, for example the prompt setup.
+Asynchronous plugins make the plugins load in the background and therefore make the prompt load way faster. That is especially useful on slow machines, but it might cause problems with certain plugins.
 
 An asynchronous plugin is declared by adding the `async` keyword after `plug `. It uses [romkatv/zsh-defer](https://github.com/romkatv/zsh-defer) behind the scenes.
 
@@ -54,8 +54,8 @@ The separator value is `, ` – a comma with at least one space.
 | Qualifier | Can be used multiple times? | Description |
 |:-:|:-:|-|
 |`if` |Yes|The expression will be evaluated by your shell and must return an exit code of 0 in order for the plugin to be installed and/or loaded.|
-|`env`|Yes|Simple environment variables to export. Exported after sourcing of the plugin and only if plugin loading is without errors|
 |`postinstall`|Yes|A shell expression that is run once after the installation.|
+|`preload`|Yes|Hook to run on every start before the plugin itself is sourced|
 |`postload`|Yes|Hook to run on every start after the plugin itself is sourced|
 |`nosource`|No|If you do not want to automatically source the plugin file, for example because it is a binary, you can set `nosource=true`.|
 |`where`|No|Alternative plugin location.|
@@ -64,27 +64,26 @@ The separator value is `, ` – a comma with at least one space.
 Here is a short, working example:
 
 ```zsh
+# Otherwise we cannot load the prompt asynchronously
+setopt no_prompt_bang prompt_percent prompt_subst
+
 if [[ ! -d ${ZDOTDIR}/plugins ]]; then
     git clone --depth=1 https://github.com/trobjo/zsh-plugin-manager 2> /dev/null "${ZDOTDIR}/plugins/trobjo/zsh-plugin-manager"
     command chmod g-rwX "${ZDOTDIR}/plugins"
-    mkdir -p "${HOME}/.local/bin"
+    [ ! -d "${HOME}/.local/bin" ] && mkdir -p "${HOME}/.local/bin"
 fi
-
 source "${ZDOTDIR}/plugins/trobjo/zsh-plugin-manager/zsh-plugin-manager.zsh"
 
-plug romkatv/gitstatus
-plug trobjo/zsh-prompt-compact
-
-plug async trobjo/zsh-completions
-plug async 'https://github.com/junegunn/fzf/releases/download/0.26.0/fzf-0.26.0-linux_amd64.tar.gz',\
-           if:'! command -v fzf',\
-           nosource:true,\
-           postinstall:'tar zxvf ${filename} --directory ${HOME}/.local/bin/ && rm ${filename}'
-plug async trobjo/Neovim-config,\
-           if:'command -v nvim',\
-           where:'$XDG_CONFIG_HOME/nvim',\
-           postinstall:'nvim +PlugInstall +qall; printf "\e[6 q\n\n"',\
-           nosource:true
+plug trobjo/zsh-completions
+plug async romkatv/gitstatus
+plug async zsh-users/zsh-syntax-highlighting
+plug async 'zsh-users/zsh-autosuggestions',\
+            postload:'ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=5,underline',\
+            postload:'ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(go_home bracketed-paste-url-magic url-quote-magic
+                    repeat-last-command-or-complete-entry expand-or-complete)'
+plug async trobjo/zsh-prompt-compact,\
+           preload:'[ $PopUp ] && PROHIBIT_TERM_TITLE=true',\
+           preload:'READ_ONLY_ICON=""'
 
 plug init
 ```
