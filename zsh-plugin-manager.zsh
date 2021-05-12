@@ -90,7 +90,6 @@ compile_or_recompile() {
         source_cmd+="source"
         local input=${1}
         set --
-        local plugin
         for plugin in ${${(P)input}}; do
             unset nosource github_name filename plugindir preload postload postinstall where fetchcommand
             # split strings by args
