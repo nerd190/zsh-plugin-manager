@@ -166,7 +166,9 @@ __plug_init() {
         if [[ -n "${postload}" ]]; then
             eval "${(e)postload}"
         fi
+
         _loaded_plugins+=(${github_name})
+
     done
     unset github_name filename plugindir preload postload postinstall where fetchcommand source_cmd
     printf "\x1b[?25h"            # show the cursor again
