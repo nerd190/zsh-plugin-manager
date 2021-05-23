@@ -52,6 +52,7 @@ __plug_update() {
             eval "${value}" > /dev/null 2>&1 || continue 2
             ;;
             (where)
+            [[ -d $value ]] || continue 2
             local where="${(e)value}"
             ;;
             (*)
