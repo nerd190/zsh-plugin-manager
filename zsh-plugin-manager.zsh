@@ -125,6 +125,7 @@ __plug_init() {
                     else
                         fetchcommand=("curl" "-L" "-O" "$github_name")
                     fi
+                    ;;
                 git@)
                     fetchcommand=("git" "clone" "--depth=1" "$github_name" "${plugindir}")
                     ;;
