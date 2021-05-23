@@ -120,15 +120,11 @@ __plug_init() {
             case "${github_name:0:4}" in
                 http)
                     filename=("${github_name##*/}")
-                    case $filename in
-                        gz|deb)
-                        fetchcommand=("curl" "-L" "-O" "$github_name")
-                            ;;
-                        *)
+                    if [[ "${filename:e}" == "" ]]; then
                         fetchcommand=("curl" "-L" "$github_name" "--create-dirs" "--output" "$where")
-                            ;;
-                    esac
-                    ;;
+                    else
+                        fetchcommand=("curl" "-L" "-O" "$github_name")
+                    fi
                 git@)
                     fetchcommand=("git" "clone" "--depth=1" "$github_name" "${plugindir}")
                     ;;
