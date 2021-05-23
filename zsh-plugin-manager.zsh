@@ -117,29 +117,39 @@ __plug_init() {
             printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
 
             prefix="${github_name:0:4}"
-            if [[ "$prefix" == 'http' ]]; then
-                filename=("${github_name##*/}")
-                fetchcommand='curl -L -O "$github_name"'
-            elif [[ "$prefix" == 'git@' ]]; then
-                fetchcommand='git clone --depth=1 "$github_name" ${plugindir}'
-            else
-                fetchcommand='git clone --depth=1 "https://github.com/${github_name}.git" ${plugindir}'
-            fi
+            case "${github_name:0:4}" in
+                http)
+                    filename=("${github_name##*/}")
+                    case $filename in
+                        gz|deb)
+                        fetchcommand=("curl" "-L" "-O" "$github_name")
+                            ;;
+                        *)
+                        fetchcommand=("curl" "-L" "$github_name" "--create-dirs" "--output" "$where")
+                            ;;
+                    esac
+                    ;;
+                git@)
+                    fetchcommand=("git" "clone" "--depth=1" "$github_name" "${plugindir}")
+                    ;;
+                *)
+                    fetchcommand=("git" "clone" "--depth=1" "https://github.com/${github_name}.git" "${plugindir}")
+                    ;;
+            esac
 
-            if eval "${fetchcommand}" 2> /dev/null; then
+            if ${fetchcommand} 2> /dev/null; then
                 printf "\x1B[32m\033[3mSucces\033[0m!\n"
+                if [[ "${filename:e}" == "gz" ]]; then
+                    tar zxvf "${filename}" --directory "${where%/*}/" 1> /dev/null
+                    rm "${filename}"
+                    chmod +x "$where"
+                elif [[ -n ${postinstall} ]]; then
+                    eval "${(e)postinstall}" 1> /dev/null ||\
+                    printf "\r\x1B[31mFailed to run postinstall hook for \x1B[35m\033[3m$github_name\033[0m\n"
+                fi
             else
                 printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
                 continue
-            fi
-
-            if [[ -n ${postinstall} ]]; then
-                maxlength=${${github_name##*/}:0:21}
-                printf "\rPerforming \x1B[34m\033[3m${maxlength}\033[0m post-install hook "
-                printf %$((21 - ${#maxlength}))s…
-                eval "${(e)postinstall}" 1> /dev/null &&\
-                printf " \x1B[32m\033[3mSucces\033[0m!\n" ||\
-                printf "\r\x1B[31mFailed to run postinstall hook for \x1B[35m\033[3m$github_name\033[0m\n"
             fi
         fi
 
