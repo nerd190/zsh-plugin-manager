@@ -175,7 +175,7 @@ __plug_init() {
             eval "${(e)postload}"
         fi
 
-        _loaded_plugins+=(${github_name})
+        _loaded_plugins+=("\n${github_name}")
 
     done
     unset github_name filename plugindir preload postload postinstall where fetchcommand source_cmd
