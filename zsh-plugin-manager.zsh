@@ -41,9 +41,9 @@ __plug_update() {
     set --
     local plugin
     for plugin in ${_plugins}; do
-    unset where plugindir github_name
+    unset where plugin_location remote_location
     parts=("${(@s[, ])plugin}")
-    local github_name="${parts[1]}"
+    local remote_location="${parts[1]}"
     for part in "${parts[@]:1}"; do
         key="${part%%:*}"
         value="${part#*:}"
@@ -60,14 +60,14 @@ __plug_update() {
             esac
         done
 
-        plugindir="${where:-${PLUGROOT}/$github_name}"
+        plugin_location="${where:-${PLUGROOT}/$remote_location}"
 
-        printf "Updating \x1B[35m\033[3m${(r:40:: :)github_name} \033[0m … "
-        if git -C ${plugindir} pull 2> /dev/null; then
+        printf "Updating \x1B[35m\033[3m${(r:40:: :)remote_location} \033[0m … "
+        if git -C ${plugin_location} pull 2> /dev/null; then
             continue
         elif [[ -n $force ]]; then
-            git -C ${plugindir} reset --hard HEAD
-            git -C ${plugindir} pull 2> /dev/null
+            git -C ${plugin_location} reset --hard HEAD
+            git -C ${plugin_location} pull 2> /dev/null
         else
             printf "\x1B[31mFailed to update\033[0m\n"
             continue 1
@@ -81,10 +81,10 @@ __plug_init() {
     set --
     local plugin
     for plugin in ${_plugins}; do
-        unset source_cmd github_name filename plugindir preload postload postinstall where fetchcommand
+        unset source_cmd remote_location filename plugin_location preload postload postinstall where fetchcommand pwd
         # split strings by args
         parts=("${(@s[, ])plugin}")
-        github_name="${parts[1]}"
+        remote_location="${parts[1]}"
 
         for part in "${parts[@]:1}"; do
             key="${part%%:*}"
@@ -106,17 +106,17 @@ __plug_init() {
                 where="${(e)value}"
                 ;;
                 (*)
-                printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${github_name}"\033[0m plugin\n"
+                printf "\r\x1B[31mDid not understand the key: \033[0m\x1B[3m"${part}"\033[0m\nSkipping \x1B[35m"${remote_location}"\033[0m plugin\n"
                 continue 2
                 ;;
             esac
         done
 
-        plugindir="${where:-${PLUGROOT}/$github_name}"
+        plugin_location="${where:-${PLUGROOT}/$remote_location}"
 
-        if [[ ! -e "${plugindir}" ]]; then
-            printf "\rInstalling \x1B[35m\033[3m${(r:39:)github_name}\033[0m … "
-
+        if [[ ! -e "${plugin_location}" ]]; then
+            printf "\rInstalling \x1B[35m\033[3m${(r:39:)remote_location}\033[0m … "
+            case "${remote_location:0:4}" in
             prefix="${github_name:0:4}"
             case "${github_name:0:4}" in
                 http)
@@ -141,12 +141,11 @@ __plug_init() {
                     tar zxvf "${filename}" --directory "${where%/*}/" 1> /dev/null
                     rm "${filename}"
                     chmod +x "$where"
-                elif [[ -n ${postinstall} ]]; then
                     eval "${(e)postinstall}" 1> /dev/null ||\
-                    printf "\r\x1B[31mFailed to run postinstall hook for \x1B[35m\033[3m$github_name\033[0m\n"
+                    printf "\r\x1B[31mFailed to run postinstall hook for \x1B[35m\033[3m$remote_location\033[0m\n"
                 fi
             else
-                printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$github_name\033[0m, skipping…\n"
+                printf "\r\x1B[31mFAILED\033[0m to install \x1B[35m\033[3m$remote_location\033[0m, skipping…\n"
                 continue
             fi
         fi
@@ -156,11 +155,11 @@ __plug_init() {
         fi
 
         if [[ ${source_cmd} != "ignore" ]]; then
-            filename="${plugindir}/${${github_name##*/}//.zsh/}.zsh"
+            filename="${plugin_location}/${${remote_location##*/}//.zsh/}.zsh"
             if [[ ! -f "${filename}" ]]; then
-                filename="${plugindir}/${github_name##*/}.plugin.zsh"
+                filename="${plugin_location}/${remote_location##*/}.plugin.zsh"
                 if [[ ! -f "${filename}" ]]; then
-                    filename="${plugindir}/${${github_name##*/}//zsh-/}.plugin.zsh"
+                    filename="${plugin_location}/${${remote_location##*/}//zsh-/}.plugin.zsh"
                     if [ ! -f "${filename}" ]; then
                         printf "No filename with the name \"${filename}\"\n"
                         continue
@@ -178,7 +177,7 @@ __plug_init() {
         _installed_plugins+=("\n${remote_location}")
 
     done
-    unset github_name filename plugindir preload postload postinstall where fetchcommand source_cmd
+    unset remote_location filename plugin_location preload postload postinstall where fetchcommand source_cmd
     printf "\x1b[?25h"            # show the cursor again
 }
 
