@@ -1,5 +1,5 @@
 typeset -aU _plugins
-typeset -aU _loaded_plugins
+typeset -aU _installed_plugins
 export PLUGROOT="${ZDOTDIR}/plugins"
 
 plug() {
@@ -175,7 +175,7 @@ __plug_init() {
             eval "${(e)postload}"
         fi
 
-        _loaded_plugins+=("\n${github_name}")
+        _installed_plugins+=("\n${remote_location}")
 
     done
     unset github_name filename plugindir preload postload postinstall where fetchcommand source_cmd
