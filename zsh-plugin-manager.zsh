@@ -116,75 +116,68 @@ __plug_init() {
 
         if [[ ! -e "${plugin_location}" ]]; then
             printf "\rInstalling \x1B[35m\033[3m${(r:39:)remote_location}\033[0m … "
-            case "${remote_location:0:4}" in
-                http)
-                    filename=("${PWD}/${remote_location##*/}")
-                    curl -L "$remote_location" --output "$filename"
-                    if [[ "${filename:e}" == "" ]]; then
-                        mv "${filename}" "${where}" && chmod +x "${where}" && success=1
+
+            if [[ "$remote_location" =~ ^[-a-zA-Z_0-9]+/[-\.a-zA-Z_0-9]+$ ]]; then
+                git clone --depth=1 "https://github.com/${remote_location}.git" "${plugin_location}" 2> /dev/null
+            elif ! git clone --depth=1 "$remote_location" "${plugin_location}" 2> /dev/null; then
+                filename=("${PWD}/${remote_location##*/}")
+                curl -L "$remote_location" --output "$filename"
+                if [[ "${filename:e}" == "" ]]; then
+                    mv "${filename}" "${where}" && chmod +x "${where}" && success=1
+                else
+                    mkdir "tmp"
+                    cd tmp
+
+                    case "${filename:l}" in
+                        (*.tar.gz|*.tgz) (( $+commands[pigz] )) && { pigz -dc "$filename" | tar xv } || tar zxvf "$filename" ;;
+                        (*.tar.bz2|*.tbz|*.tbz2) tar xvjf "$filename" ;;
+                        (*.tar.xz|*.txz)
+                            tar --xz --help &> /dev/null \
+                            && tar --xz -xvf "$filename" \
+                            || xzcat "$filename" | tar xvf - ;;
+                        (*.tar.zma|*.tlz)
+                            tar --lzma --help &> /dev/null \
+                            && tar --lzma -xvf "$filename" \
+                            || lzcat "$filename" | tar xvf - ;;
+                        (*.tar.zst|*.tzst)
+                            tar --zstd --help &> /dev/null \
+                            && tar --zstd -xvf "$filename" \
+                            || zstdcat "$filename" | tar xvf - ;;
+                        (*.tar) tar xvf "$filename" ;;
+                        (tar.lz) (( $+commands[lzip] )) && tar xvf "$filename" ;;
+                        (*.gz) (( $+commands[pigz] )) && pigz -dk "$filename" || gunzip -k "$filename" ;;
+                        (*.bz2) bunzip2 "$filename" ;;
+                        (*.xz) unxz "$filename" ;;
+                        (*.lzma) unlzma "$filename" ;;
+                        (*.z) uncompress "$filename" ;;
+                        (*.zip|*.war|*.jar|*.sublime-package|*.ipsw|*.xpi|*.apk|*.aar|*.whl) unzip "$filename" ;;
+                        (*.rar) unrar x -ad "$filename" ;;
+                        (*.7z) 7za x "$filename" ;;
+                        (*.zst) unzstd "$filename" ;;
+                        (*)
+                            print "Wrong file type: '$filename' "
+                            rmdir "$where"
+                            continue
+                        ;;
+                    esac
+                    all_files=(*(ND))
+
+                    if [[ ${#all_files[@]} -eq 1 ]] && [[ -f "${all_files}" ]]; then
+                        mv "${all_files}" "${plugin_location}"
+                        cd ..
+                        rmdir tmp
                     else
-                        mkdir "tmp"
-                        cd tmp
-
-                        case "${filename:l}" in
-                            (*.tar.gz|*.tgz) (( $+commands[pigz] )) && { pigz -dc "$filename" | tar xv } || tar zxvf "$filename" ;;
-                            (*.tar.bz2|*.tbz|*.tbz2) tar xvjf "$filename" ;;
-                            (*.tar.xz|*.txz)
-                                tar --xz --help &> /dev/null \
-                                && tar --xz -xvf "$filename" \
-                                || xzcat "$filename" | tar xvf - ;;
-                            (*.tar.zma|*.tlz)
-                                tar --lzma --help &> /dev/null \
-                                && tar --lzma -xvf "$filename" \
-                                || lzcat "$filename" | tar xvf - ;;
-                            (*.tar.zst|*.tzst)
-                                tar --zstd --help &> /dev/null \
-                                && tar --zstd -xvf "$filename" \
-                                || zstdcat "$filename" | tar xvf - ;;
-                            (*.tar) tar xvf "$filename" ;;
-                            (tar.lz) (( $+commands[lzip] )) && tar xvf "$filename" ;;
-                            (*.gz) (( $+commands[pigz] )) && pigz -dk "$filename" || gunzip -k "$filename" ;;
-                            (*.bz2) bunzip2 "$filename" ;;
-                            (*.xz) unxz "$filename" ;;
-                            (*.lzma) unlzma "$filename" ;;
-                            (*.z) uncompress "$filename" ;;
-                            (*.zip|*.war|*.jar|*.sublime-package|*.ipsw|*.xpi|*.apk|*.aar|*.whl) unzip "$filename" ;;
-                            (*.rar) unrar x -ad "$filename" ;;
-                            (*.7z) 7za x "$filename" ;;
-                            (*.zst) unzstd "$filename" ;;
-                            (*)
-                                print "Wrong file type: '$filename' "
-                                rmdir "$where"
-                                continue
-                            ;;
-                        esac
-                        all_files=(*(ND))
-
-                        if [[ ${#all_files[@]} -eq 1 ]] && [[ -f "${all_files}" ]]; then
-                            mv "${all_files}" "${plugin_location}"
-                            cd ..
-                            rmdir tmp
-                        else
-                            if [[ ${#all_files[@]} -eq 1 ]] && [[ -d "${all_files}" ]]; then
-                                mv "${all_files}/"*(D) . && rmdir "${all_files}"
-                            fi
-                            cd ..
-                            mv tmp "${plugin_location}"
+                        if [[ ${#all_files[@]} -eq 1 ]] && [[ -d "${all_files}" ]]; then
+                            mv "${all_files}/"*(D) . && rmdir "${all_files}"
                         fi
-                    success=1
+                        cd ..
+                        mv tmp "${plugin_location}"
                     fi
-                    ;;
-                git@)
-                    git clone --depth=1 "$remote_location" "${plugin_location}" 2> /dev/null && local success=1
-                    ;;
-                *)
-                    git clone --depth=1 "https://github.com/${remote_location}.git" "${plugin_location}" 2> /dev/null && local success=1
-                    ;;
-            esac
+                fi
+            fi
 
-            if [[ ${success} == 1 ]]; then
+            if [[ $? == 0 ]]; then
                 printf "\x1B[32m\033[3mSucces\033[0m!\n"
-
                 if [[ -n ${postinstall} ]]; then
                     eval "${(e)postinstall}" 1> /dev/null ||\
                     printf "\r\x1B[31mFailed to run postinstall hook for \x1B[35m\033[3m$remote_location\033[0m\n"
@@ -219,7 +212,7 @@ __plug_init() {
             eval "${(e)postload}"
         fi
 
-        _installed_plugins+=("\n${remote_location}")
+        _installed_plugins+=("\n${where:-$remote_location}")
 
     done
     unset remote_location filename plugin_location preload postload postinstall where fetchcommand source_cmd
