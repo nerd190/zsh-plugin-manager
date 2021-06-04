@@ -123,7 +123,7 @@ __plug_init() {
                 filename=("${PWD}/${remote_location##*/}")
                 curl -L "$remote_location" --output "$filename"
                 if [[ "${filename:e}" == "" ]]; then
-                    mv "${filename}" "${where}" && chmod +x "${where}" && success=1
+                    mv "${filename}" "${where}" && chmod +x "${where}"
                 else
                     mkdir "tmp"
                     cd tmp
