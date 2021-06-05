@@ -117,9 +117,8 @@ __plug_init() {
         if [[ ! -e "${plugin_location}" ]]; then
             printf "\rInstalling \x1B[35m\033[3m${(r:39:)remote_location}\033[0m … "
 
-            if [[ "$remote_location" =~ ^[-a-zA-Z_0-9]+/[-\.a-zA-Z_0-9]+$ ]]; then
-                git clone --depth=1 "https://github.com/${remote_location}.git" "${plugin_location}" 2> /dev/null
-            elif ! git clone --depth=1 "$remote_location" "${plugin_location}" 2> /dev/null; then
+            [[ "$remote_location" =~ ^[-a-zA-Z_0-9]+/[-\.a-zA-Z_0-9]+$ ]] && pull_url="https://github.com/${remote_location}.git"
+            if ! git clone --depth=1 "${pull_url:-remote_location}" "${plugin_location}" 2> /dev/null; then
                 filename=("${PWD}/${remote_location##*/}")
                 curl -L "$remote_location" --output "$filename"
                 if [[ "${filename:e}" == "" ]]; then
@@ -215,7 +214,7 @@ __plug_init() {
         _installed_plugins+=("\n${where:-$remote_location}")
 
     done
-    unset remote_location filename plugin_location preload postload postinstall where fetchcommand source_cmd
+    unset remote_location filename plugin_location preload postload postinstall where fetchcommand source_cmd pull_url
     printf "\x1b[?25h"            # show the cursor again
 }
 
