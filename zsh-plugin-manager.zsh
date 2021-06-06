@@ -211,7 +211,7 @@ __plug_init() {
             eval "${(e)postload}"
         fi
 
-        _installed_plugins+=("\n${where:-$remote_location}")
+        _installed_plugins+=("${_installed_plugins:+\n}${where:-$remote_location}")
 
     done
     unset remote_location filename plugin_location preload postload postinstall where fetchcommand source_cmd pull_url
