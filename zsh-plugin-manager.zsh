@@ -97,7 +97,7 @@ __plug_init() {
                 local $key="${${(P)key}:+${(P)key}; }${value}"
                 ;;
                 (defer)
-                source_cmd=("zsh-defer" "${value/defer/}")
+                source_cmd=("zsh-defer" ${value/defer/})
                 ;;
                 (ignore)
                 source_cmd="ignore"
