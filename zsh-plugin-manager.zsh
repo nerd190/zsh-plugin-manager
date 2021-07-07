@@ -123,6 +123,8 @@ __plug_init() {
                 curl -L "$remote_location" --output "$filename"
                 if [[ "${filename:e}" == "" ]]; then
                     mv "${filename}" "${where}" && chmod +x "${where}"
+                 elif [[ "${filename:e}" == "deb" ]]; then
+                        sudo dpkg -i "${filename}"
                 else
                     mkdir "tmp"
                     cd tmp
